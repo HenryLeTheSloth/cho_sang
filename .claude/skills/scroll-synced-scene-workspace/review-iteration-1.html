@@ -1,0 +1,1325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Eval Review</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@500;600&family=Lora:wght@400;500&display=swap" rel="stylesheet">
+  <script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js" integrity="sha384-EnyY0/GSHQGSxSgMwaIPzSESbqoOLSexfnSMN2AP+39Ckmn92stwABZynq1JyzdT" crossorigin="anonymous"></script>
+  <style>
+    :root {
+      --bg: #faf9f5;
+      --surface: #ffffff;
+      --border: #e8e6dc;
+      --text: #141413;
+      --text-muted: #b0aea5;
+      --accent: #d97757;
+      --accent-hover: #c4613f;
+      --green: #788c5d;
+      --green-bg: #eef2e8;
+      --red: #c44;
+      --red-bg: #fceaea;
+      --header-bg: #141413;
+      --header-text: #faf9f5;
+      --radius: 6px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Lora', Georgia, serif;
+      background: var(--bg);
+      color: var(--text);
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ---- Header ---- */
+    .header {
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 1rem 2rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-shrink: 0;
+    }
+    .header h1 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+    }
+    .header .instructions {
+      font-size: 0.8rem;
+      opacity: 0.7;
+      margin-top: 0.25rem;
+    }
+    .header .progress {
+      font-size: 0.875rem;
+      opacity: 0.8;
+      text-align: right;
+    }
+
+    /* ---- Main content ---- */
+    .main {
+      flex: 1;
+      overflow-y: auto;
+      padding: 1.5rem 2rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    /* ---- Sections ---- */
+    .section {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      flex-shrink: 0;
+    }
+    .section-header {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.75rem 1rem;
+      font-size: 0.75rem;
+      font-weight: 500;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      border-bottom: 1px solid var(--border);
+      background: var(--bg);
+    }
+    .section-body {
+      padding: 1rem;
+    }
+
+    /* ---- Config badge ---- */
+    .config-badge {
+      display: inline-block;
+      padding: 0.2rem 0.625rem;
+      border-radius: 9999px;
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.6875rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+      margin-left: 0.75rem;
+      vertical-align: middle;
+    }
+    .config-badge.config-primary {
+      background: rgba(33, 150, 243, 0.12);
+      color: #1976d2;
+    }
+    .config-badge.config-baseline {
+      background: rgba(255, 193, 7, 0.15);
+      color: #f57f17;
+    }
+
+    /* ---- Prompt ---- */
+    .prompt-text {
+      white-space: pre-wrap;
+      font-size: 0.9375rem;
+      line-height: 1.6;
+    }
+
+    /* ---- Outputs ---- */
+    .output-file {
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      overflow: hidden;
+    }
+    .output-file + .output-file {
+      margin-top: 1rem;
+    }
+    .output-file-header {
+      padding: 0.5rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .output-file-header .dl-btn {
+      font-size: 0.7rem;
+      color: var(--accent);
+      text-decoration: none;
+      cursor: pointer;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      font-weight: 500;
+      opacity: 0.8;
+    }
+    .output-file-header .dl-btn:hover {
+      opacity: 1;
+      text-decoration: underline;
+    }
+    .output-file-content {
+      padding: 0.75rem;
+      overflow-x: auto;
+    }
+    .output-file-content pre {
+      font-size: 0.8125rem;
+      line-height: 1.5;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-family: 'SF Mono', SFMono-Regular, Consolas, 'Liberation Mono', Menlo, monospace;
+    }
+    .output-file-content img {
+      max-width: 100%;
+      height: auto;
+      border-radius: 4px;
+    }
+    .output-file-content iframe {
+      width: 100%;
+      height: 600px;
+      border: none;
+    }
+    .output-file-content table {
+      border-collapse: collapse;
+      font-size: 0.8125rem;
+      width: 100%;
+    }
+    .output-file-content table td,
+    .output-file-content table th {
+      border: 1px solid var(--border);
+      padding: 0.375rem 0.5rem;
+      text-align: left;
+    }
+    .output-file-content table th {
+      background: var(--bg);
+      font-weight: 600;
+    }
+    .output-file-content .download-link {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      color: var(--accent);
+      text-decoration: none;
+      font-size: 0.875rem;
+      cursor: pointer;
+    }
+    .output-file-content .download-link:hover {
+      background: var(--border);
+    }
+    .empty-state {
+      color: var(--text-muted);
+      font-style: italic;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    /* ---- Feedback ---- */
+    .prev-feedback {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      padding: 0.625rem 0.75rem;
+      margin-top: 0.75rem;
+      font-size: 0.8125rem;
+      color: var(--text-muted);
+      line-height: 1.5;
+    }
+    .prev-feedback-label {
+      font-size: 0.7rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      margin-bottom: 0.25rem;
+      color: var(--text-muted);
+    }
+    .feedback-textarea {
+      width: 100%;
+      min-height: 100px;
+      padding: 0.75rem;
+      border: 1px solid var(--border);
+      border-radius: 4px;
+      font-family: inherit;
+      font-size: 0.9375rem;
+      line-height: 1.5;
+      resize: vertical;
+      color: var(--text);
+    }
+    .feedback-textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.1);
+    }
+    .feedback-status {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin-top: 0.5rem;
+      min-height: 1.1em;
+    }
+
+    /* ---- Grades (collapsible) ---- */
+    .grades-toggle {
+      display: flex;
+      align-items: center;
+      cursor: pointer;
+      user-select: none;
+    }
+    .grades-toggle:hover {
+      color: var(--accent);
+    }
+    .grades-toggle .arrow {
+      margin-right: 0.5rem;
+      transition: transform 0.15s;
+      font-size: 0.75rem;
+    }
+    .grades-toggle .arrow.open {
+      transform: rotate(90deg);
+    }
+    .grades-content {
+      display: none;
+      margin-top: 0.75rem;
+    }
+    .grades-content.open {
+      display: block;
+    }
+    .grades-summary {
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .grade-badge {
+      display: inline-block;
+      padding: 0.125rem 0.5rem;
+      border-radius: 9999px;
+      font-size: 0.75rem;
+      font-weight: 600;
+    }
+    .grade-pass { background: var(--green-bg); color: var(--green); }
+    .grade-fail { background: var(--red-bg); color: var(--red); }
+    .assertion-list {
+      list-style: none;
+    }
+    .assertion-item {
+      padding: 0.625rem 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.8125rem;
+    }
+    .assertion-item:last-child { border-bottom: none; }
+    .assertion-status {
+      font-weight: 600;
+      margin-right: 0.5rem;
+    }
+    .assertion-status.pass { color: var(--green); }
+    .assertion-status.fail { color: var(--red); }
+    .assertion-evidence {
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      margin-top: 0.25rem;
+      padding-left: 1.5rem;
+    }
+
+    /* ---- View tabs ---- */
+    .view-tabs {
+      display: flex;
+      gap: 0;
+      padding: 0 2rem;
+      background: var(--bg);
+      border-bottom: 1px solid var(--border);
+      flex-shrink: 0;
+    }
+    .view-tab {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.625rem 1.25rem;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      border: none;
+      background: none;
+      color: var(--text-muted);
+      border-bottom: 2px solid transparent;
+      transition: all 0.15s;
+    }
+    .view-tab:hover { color: var(--text); }
+    .view-tab.active {
+      color: var(--accent);
+      border-bottom-color: var(--accent);
+    }
+    .view-panel { display: none; }
+    .view-panel.active { display: flex; flex-direction: column; flex: 1; overflow: hidden; }
+
+    /* ---- Benchmark view ---- */
+    .benchmark-view {
+      padding: 1.5rem 2rem;
+      overflow-y: auto;
+      flex: 1;
+    }
+    .benchmark-table {
+      border-collapse: collapse;
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      font-size: 0.8125rem;
+      width: 100%;
+      margin-bottom: 1.5rem;
+    }
+    .benchmark-table th, .benchmark-table td {
+      padding: 0.625rem 0.75rem;
+      text-align: left;
+      border: 1px solid var(--border);
+    }
+    .benchmark-table th {
+      font-family: 'Poppins', sans-serif;
+      background: var(--header-bg);
+      color: var(--header-text);
+      font-weight: 500;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+    }
+    .benchmark-table tr:hover { background: var(--bg); }
+    .benchmark-table tr.benchmark-row-with { background: rgba(33, 150, 243, 0.06); }
+    .benchmark-table tr.benchmark-row-without { background: rgba(255, 193, 7, 0.06); }
+    .benchmark-table tr.benchmark-row-with:hover { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-without:hover { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-table tr.benchmark-row-avg { font-weight: 600; border-top: 2px solid var(--border); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-with { background: rgba(33, 150, 243, 0.12); }
+    .benchmark-table tr.benchmark-row-avg.benchmark-row-without { background: rgba(255, 193, 7, 0.12); }
+    .benchmark-delta-positive { color: var(--green); font-weight: 600; }
+    .benchmark-delta-negative { color: var(--red); font-weight: 600; }
+    .benchmark-notes {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1rem;
+    }
+    .benchmark-notes h3 {
+      font-family: 'Poppins', sans-serif;
+      font-size: 0.875rem;
+      margin-bottom: 0.75rem;
+    }
+    .benchmark-notes ul {
+      list-style: disc;
+      padding-left: 1.25rem;
+    }
+    .benchmark-notes li {
+      font-size: 0.8125rem;
+      line-height: 1.6;
+      margin-bottom: 0.375rem;
+    }
+    .benchmark-empty {
+      color: var(--text-muted);
+      font-style: italic;
+      text-align: center;
+      padding: 3rem;
+    }
+
+    /* ---- Navigation ---- */
+    .nav {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem 2rem;
+      border-top: 1px solid var(--border);
+      background: var(--surface);
+      flex-shrink: 0;
+    }
+    .nav-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text);
+      transition: all 0.15s;
+    }
+    .nav-btn:hover:not(:disabled) {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .nav-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+    .done-btn {
+      font-family: 'Poppins', sans-serif;
+      padding: 0.5rem 1.5rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      color: var(--text);
+      cursor: pointer;
+      font-size: 0.875rem;
+      font-weight: 500;
+      transition: all 0.15s;
+    }
+    .done-btn:hover {
+      background: var(--bg);
+      border-color: var(--text-muted);
+    }
+    .done-btn.ready {
+      border: none;
+      background: var(--accent);
+      color: white;
+      font-weight: 600;
+    }
+    .done-btn.ready:hover {
+      background: var(--accent-hover);
+    }
+    /* ---- Done overlay ---- */
+    .done-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0, 0, 0, 0.5);
+      z-index: 100;
+      justify-content: center;
+      align-items: center;
+    }
+    .done-overlay.visible {
+      display: flex;
+    }
+    .done-card {
+      background: var(--surface);
+      border-radius: 12px;
+      padding: 2rem 3rem;
+      text-align: center;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+      max-width: 500px;
+    }
+    .done-card h2 {
+      font-size: 1.5rem;
+      margin-bottom: 0.5rem;
+    }
+    .done-card p {
+      color: var(--text-muted);
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+    .done-card .btn-row {
+      display: flex;
+      gap: 0.5rem;
+      justify-content: center;
+    }
+    .done-card button {
+      padding: 0.5rem 1.25rem;
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      background: var(--surface);
+      cursor: pointer;
+      font-size: 0.875rem;
+    }
+    .done-card button:hover {
+      background: var(--bg);
+    }
+    /* ---- Toast ---- */
+    .toast {
+      position: fixed;
+      bottom: 5rem;
+      left: 50%;
+      transform: translateX(-50%);
+      background: var(--header-bg);
+      color: var(--header-text);
+      padding: 0.625rem 1.25rem;
+      border-radius: var(--radius);
+      font-size: 0.875rem;
+      opacity: 0;
+      transition: opacity 0.3s;
+      pointer-events: none;
+      z-index: 200;
+    }
+    .toast.visible {
+      opacity: 1;
+    }
+  </style>
+</head>
+<body>
+  <div id="app" style="height:100vh; display:flex; flex-direction:column;">
+    <div class="header">
+      <div>
+        <h1>Eval Review: <span id="skill-name"></span></h1>
+        <div class="instructions">Review each output and leave feedback below. Navigate with arrow keys or buttons. When done, copy feedback and paste into Claude Code.</div>
+      </div>
+      <div class="progress" id="progress"></div>
+    </div>
+
+    <!-- View tabs (only shown when benchmark data exists) -->
+    <div class="view-tabs" id="view-tabs" style="display:none;">
+      <button class="view-tab active" onclick="switchView('outputs')">Outputs</button>
+      <button class="view-tab" onclick="switchView('benchmark')">Benchmark</button>
+    </div>
+
+    <!-- Outputs panel (qualitative review) -->
+    <div class="view-panel active" id="panel-outputs">
+    <div class="main">
+      <!-- Prompt -->
+      <div class="section">
+        <div class="section-header">Prompt <span class="config-badge" id="config-badge" style="display:none;"></span></div>
+        <div class="section-body">
+          <div class="prompt-text" id="prompt-text"></div>
+        </div>
+      </div>
+
+      <!-- Outputs -->
+      <div class="section">
+        <div class="section-header">Output</div>
+        <div class="section-body" id="outputs-body">
+          <div class="empty-state">No output files found</div>
+        </div>
+      </div>
+
+      <!-- Previous Output (collapsible) -->
+      <div class="section" id="prev-outputs-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="togglePrevOutputs()">
+            <span class="arrow" id="prev-outputs-arrow">&#9654;</span>
+            Previous Output
+          </div>
+        </div>
+        <div class="grades-content" id="prev-outputs-content"></div>
+      </div>
+
+      <!-- Grades (collapsible) -->
+      <div class="section" id="grades-section" style="display:none;">
+        <div class="section-header">
+          <div class="grades-toggle" onclick="toggleGrades()">
+            <span class="arrow" id="grades-arrow">&#9654;</span>
+            Formal Grades
+          </div>
+        </div>
+        <div class="grades-content" id="grades-content"></div>
+      </div>
+
+      <!-- Feedback -->
+      <div class="section">
+        <div class="section-header">Your Feedback</div>
+        <div class="section-body">
+          <textarea
+            class="feedback-textarea"
+            id="feedback"
+            placeholder="What do you think of this output? Any issues, suggestions, or things that look great?"
+          ></textarea>
+          <div class="feedback-status" id="feedback-status"></div>
+          <div class="prev-feedback" id="prev-feedback" style="display:none;">
+            <div class="prev-feedback-label">Previous feedback</div>
+            <div id="prev-feedback-text"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="nav" id="outputs-nav">
+      <button class="nav-btn" id="prev-btn" onclick="navigate(-1)">&#8592; Previous</button>
+      <button class="done-btn" id="done-btn" onclick="showDoneDialog()">Submit All Reviews</button>
+      <button class="nav-btn" id="next-btn" onclick="navigate(1)">Next &#8594;</button>
+    </div>
+    </div><!-- end panel-outputs -->
+
+    <!-- Benchmark panel (quantitative stats) -->
+    <div class="view-panel" id="panel-benchmark">
+      <div class="benchmark-view" id="benchmark-content">
+        <div class="benchmark-empty">No benchmark data available. Run a benchmark to see quantitative results here.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Done overlay -->
+  <div class="done-overlay" id="done-overlay">
+    <div class="done-card">
+      <h2>Review Complete</h2>
+      <p>Your feedback has been saved. Go back to your Claude Code session and tell Claude you're done reviewing.</p>
+      <div class="btn-row">
+        <button onclick="closeDoneDialog()">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Toast -->
+  <div class="toast" id="toast"></div>
+
+  <script>
+    // ---- Embedded data (injected by generate_review.py) ----
+    const EMBEDDED_DATA = {"skill_name": "scroll-synced-scene", "runs": [{"id": "eval-honey-jar-fix-with_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "index.html", "type": "text", "content": "<canvas id=\"scene\" style=\"position:fixed;inset:0\"></canvas>\n<main>\n  <section style=\"min-height:100vh\">Meadow</section>\n  <section style=\"min-height:100vh\">Hive</section>\n  <section style=\"min-height:100vh\">Harvest</section>\n  <section style=\"min-height:100vh\">Jar</section>\n</main>\n<script type=\"module\" src=\"./main.ts\"></script>\n"}, {"name": "main.ts", "type": "text", "content": "import * as THREE from \"three\";\nimport { update } from \"./scene\";\nimport { drop, jar, honey, drips, renderer, scene, camera } from \"./setup\";\n\nconst clock = new THREE.Clock();\nfunction frame() {\n  // wall-clock time so slow devices finish on schedule; the cap only stops a jump after a background tab\n  update(drop, jar, honey, drips, Math.min(clock.getDelta(), 0.25));\n  renderer.render(scene, camera);\n  requestAnimationFrame(frame);\n}\nframe();\n"}, {"name": "notes.md", "type": "text", "content": "# S\u1eeda trang m\u1eadt ong\n\nM\u00ecnh gi\u1eef nguy\u00ean c\u1ea5u tr\u00fac: v\u1eabn l\u00e0 `update(drop, jar, honey, drips, dt)` trong `scene.ts`, v\u1eabn l\u00e0 v\u00f2ng `frame()` trong `main.ts`. `index.html` kh\u00f4ng c\u1ea7n s\u1eeda.\n\n## 1. Cu\u1ed9n ng\u01b0\u1ee3c l\u00ean th\u00ec gi\u1ecdt m\u1eadt \u0111\u1ee9ng sai ch\u1ed7 kho\u1ea3ng m\u1ed9t gi\u00e2y\n\n**Nguy\u00ean nh\u00e2n:** v\u1ecb tr\u00ed gi\u1ecdt m\u1eadt \u0111\u01b0\u1ee3c t\u00ednh t\u1eeb `stage`. \u0110\u00e2y l\u00e0 playhead ch\u1ea1y theo th\u1eddi gian, 1,5 gi\u00e2y cho m\u1ed7i section. Khi cu\u1ed9n l\u00ean, trang \u0111\u00e3 \u0111\u1ed5i section ngay nh\u01b0ng `stage` c\u00f2n ph\u1ea3i l\u00f9i t\u1eeb t\u1eeb v\u1edbi \u0111\u00fang t\u1ed1c \u0111\u1ed9 l\u00fac ch\u1ea1y t\u1edbi. Trong l\u00fac \u0111\u00f3 gi\u1ecdt m\u1eadt v\u1eabn \u0111\u1ee9ng \u1edf ch\u1ed7 c\u0169. \u0110\u00f3 l\u00e0 kho\u1ea3ng \"m\u1ed9t gi\u00e2y\" b\u1ea1n th\u1ea5y.\n\n**C\u00e1ch s\u1eeda:** t\u00e1ch th\u00e0nh hai track.\n- **V\u1ecb tr\u00ed** gi\u1ecdt m\u1eadt gi\u1edd \u0111i theo **v\u1ecb tr\u00ed cu\u1ed9n trang** (`pos`, h\u00e0m `scrollPosition`). `pos = i` khi section i l\u1ea5p \u0111\u1ea7y m\u00e0n h\u00ecnh, v\u00e0 c\u00f3 gi\u00e1 tr\u1ecb l\u1ebb khi \u0111ang \u1edf gi\u1eefa hai section. Gi\u1ecdt m\u1eadt tr\u01b0\u1ee3t t\u1eeb `SPOTS[i]` sang `SPOTS[i+1]` trong l\u00fac hai section c\u00f9ng n\u1eb1m tr\u00ean m\u00e0n h\u00ecnh, r\u1ed3i \u0111\u1ee9ng y\u00ean khi m\u1ed9t section l\u1ea5p \u0111\u1ea7y m\u00e0n h\u00ecnh. Cu\u1ed9n l\u00ean th\u00ec n\u00f3 bay v\u1ec1 ngay theo trang, kh\u00f4ng ph\u1ea3i \u0111\u1ee3i. C\u00f3 th\u00eam `damp` nh\u1eb9 (h\u1ec7 s\u1ed1 14) \u0111\u1ec3 l\u00e0m m\u01b0\u1ee3t c\u00e1c b\u01b0\u1edbc nh\u1ea3y c\u1ee7a con l\u0103n chu\u1ed9t m\u00e0 kh\u00f4ng g\u00e2y tr\u1ec5.\n- **Hi\u1ec7u \u1ee9ng** trong section (gi\u1ecdt nh\u1ecf r\u01a1i, h\u0169 \u0111\u1ea7y) v\u1eabn d\u00f9ng playhead `stage`. Khi \u0111i l\u00f9i, playhead tua nhanh g\u1ea5p 2,5 l\u1ea7n (`REWIND`). Khi b\u1ecf qua nhi\u1ec1u section m\u1ed9t l\u00fac, n\u00f3 ch\u1ea1y nhanh h\u01a1n (`CATCH_UP`) \u0111\u1ec3 kh\u00f4ng ph\u1ea3i ng\u1ed3i \u0111\u1ee3i.\n- `onScroll()` gi\u1edd c\u0169ng \u0111\u01b0\u1ee3c g\u1ecdi l\u00fac t\u1ea3i trang v\u00e0 khi resize. N\u1ebfu tr\u01b0\u1edbc \u0111\u00e2y b\u1ea1n t\u1ea3i l\u1ea1i trang \u1edf gi\u1eefa ch\u1eebng, scene s\u1ebd \u0111\u1ee9ng \u1edf section 0 cho t\u1edbi khi b\u1ea1n cu\u1ed9n.\n\n## 2. H\u0169 \u0111\u1ea7y ch\u1eadm h\u01a1n t\u1ed1c \u0111\u1ed9 c\u00e1c gi\u1ecdt r\u01a1i v\u00e0o\n\n**Nguy\u00ean nh\u00e2n:** m\u1ef1c m\u1eadt trong h\u0169 c\u00f3 b\u1ed9 h\u1eb9n gi\u1edd ri\u00eang l\u00e0 `smooth(3.4, 3.95, stage)`, c\u00f2n c\u00e1c gi\u1ecdt r\u01a1i theo `smooth(3.1\u20263.5)`. Hai b\u1ed9 h\u1eb9n gi\u1edd n\u00e0y \u0111\u1ed9c l\u1eadp n\u00ean kh\u00f4ng kh\u1edbp nhau: gi\u1ecdt r\u01a1i xong \u1edf kho\u1ea3ng 3,6 nh\u01b0ng h\u0169 t\u1edbi 3,95 m\u1edbi \u0111\u1ea7y.\n\n**C\u00e1ch s\u1eeda:** m\u1ef1c m\u1eadt gi\u1edd t\u00ednh t\u1eeb ch\u00ednh c\u00e1c gi\u1ecdt r\u01a1i, `honey.scale.y = (t\u1ed5ng ti\u1ebfn \u0111\u1ed9 r\u01a1i c\u1ee7a c\u00e1c gi\u1ecdt) / s\u1ed1 gi\u1ecdt`. Gi\u1ecdt r\u01a1i t\u1edbi \u0111\u00e2u h\u0169 \u0111\u1ea7y t\u1edbi \u0111\u00f3. Khi cu\u1ed9n ng\u01b0\u1ee3c, h\u0169 c\u1ea1n \u0111\u00fang theo c\u00e1c gi\u1ecdt bay l\u00ean. Sau n\u00e0y b\u1ea1n ch\u1ec9nh t\u1ed1c \u0111\u1ed9 r\u01a1i th\u00ec h\u0169 t\u1ef1 kh\u1edbp theo.\n\n## 3. Laptop c\u0169 ch\u1ea1y nh\u01b0 slow-motion\n\n**Nguy\u00ean nh\u00e2n:** trong `main.ts`, `dt` b\u1ecb ch\u1eb7n \u1edf `0.033` gi\u00e2y m\u1ed7i khung h\u00ecnh. Laptop ch\u1ea1y 15 fps c\u00f3 `dt` th\u1eadt kho\u1ea3ng 0,066 s, nh\u01b0ng animation ch\u1ec9 \u0111\u01b0\u1ee3c ti\u1ebfn 0,033 s. K\u1ebft qu\u1ea3 l\u00e0 ch\u1ea1y ch\u1eadm \u0111\u00fang m\u1ed9t n\u1eeda.\n\n**C\u00e1ch s\u1eeda:** ch\u1eb7n \u1edf `0.25` gi\u00e2y. Animation gi\u1edd \u0111i theo th\u1eddi gian th\u1eadt, n\u00ean m\u00e1y ch\u1eadm ch\u1ec9 \u00edt khung h\u00ecnh h\u01a1n ch\u1ee9 kh\u00f4ng ch\u1eadm \u0111i. M\u1ee9c ch\u1eb7n 0,25 s ch\u1ec9 \u0111\u1ec3 animation kh\u00f4ng nh\u1ea3y c\u00f3c khi b\u1ea1n quay l\u1ea1i t\u1eeb tab kh\u00e1c.\n\n## Th\u00eam\n\n- N\u1ebfu ng\u01b0\u1eddi d\u00f9ng b\u1eadt `prefers-reduced-motion`: playhead nh\u1ea3y th\u1eb3ng t\u1edbi \u0111\u00edch v\u00e0 gi\u1ecdt m\u1eadt kh\u00f4ng damping.\n- `<html data-playhead=\"4.00\">` \u0111\u01b0\u1ee3c c\u1eadp nh\u1eadt m\u1ed7i khung h\u00ecnh \u0111\u1ec3 ti\u1ec7n debug v\u00e0 vi\u1ebft test e2e.\n\n## \u0110\u00e3 ki\u1ec3m tra\n\nM\u00ecnh \u0111\u00e3 ch\u1ea1y th\u1eed b\u1eb1ng node (thay `three` b\u1eb1ng stub). K\u1ebft qu\u1ea3:\n- M\u1ed9t section m\u1ea5t kho\u1ea3ng 1,5 s, \u1edf c\u1ea3 60 fps l\u1eabn 10 fps.\n- Tua l\u00f9i m\u1ea5t d\u01b0\u1edbi 0,75 s.\n- Nh\u1ea3y 4 section m\u1ea5t d\u01b0\u1edbi 3 s.\n- Playhead kh\u00f4ng bao gi\u1edd v\u01b0\u1ee3t qu\u00e1 \u0111\u00edch.\n- H\u0169 \u0111\u1ea7y \u0111\u00fang 1 khi t\u1ea5t c\u1ea3 gi\u1ecdt \u0111\u00e3 r\u01a1i xong.\n- Cu\u1ed9n t\u1eeb section cu\u1ed1i l\u00ean section 1 th\u00ec sau 0,5 s gi\u1ecdt m\u1eadt \u0111\u00e3 \u1edf \u0111\u00fang v\u1ecb tr\u00ed.\n\nM\u00ecnh ch\u01b0a ch\u1ea1y trong tr\u00ecnh duy\u1ec7t, n\u00ean b\u1ea1n n\u00ean cu\u1ed9n th\u1eed l\u00ean xu\u1ed1ng m\u1ed9t l\u01b0\u1ee3t tr\u00ean c\u1ea3 laptop c\u0169.\n"}, {"name": "scene.ts", "type": "text", "content": "// Honey landing page: a drop of honey travels through 4 sections; in the last one drips fall and fill a jar.\n// Two tracks:\n// - `pos` (page track) follows the scroll exactly: i when section i fills the screen. WHERE the drop sits.\n// - `stage` (playhead) plays section i's own effect (drips, filling) over stage i..i+1 in real time.\nimport * as THREE from \"three\";\n\nconst sections = Array.from(document.querySelectorAll<HTMLElement>(\"section\"));\nconst SPOTS: [number, number][] = [[2, 0], [-2, 0], [2, 0], [0, -1]];\n\nconst SECONDS_PER_SECTION = 1.5;\nconst CATCH_UP = 3; // extra speed per section of backlog beyond the current one\nconst REWIND = 2.5; // scrolling back up undoes a section faster than it played\nconst reducedMotion = window.matchMedia(\"(prefers-reduced-motion: reduce)\").matches;\n\nlet stage = 0;\nlet target = 0;\nlet pos = 0; // page track\nlet dropX = SPOTS[0][0];\nlet dropY = SPOTS[0][1];\n\nexport const clamp01 = (n: number) => Math.min(1, Math.max(0, n));\nconst smooth = (a: number, b: number, n: number) => {\n  const t = clamp01((n - a) / (b - a));\n  return t * t * (3 - 2 * t);\n};\n\n/** Page position in sections: i when section i's top is at the top of the screen. */\nexport function scrollPosition(rects: { top: number; height: number }[]) {\n  let p = 0;\n  rects.forEach((r, i) => {\n    if (r.top <= 0) p = i + clamp01(-r.top / r.height);\n  });\n  return Math.min(p, rects.length - 1);\n}\n\n/** Advances the playhead toward the target by `dt` wall-clock seconds, never overshooting. */\nexport function step(stage: number, target: number, dt: number) {\n  const gap = target - stage;\n  const rate = ((gap < 0 ? REWIND : 1) * (1 + CATCH_UP * Math.max(0, Math.abs(gap) - 1))) / SECONDS_PER_SECTION;\n  return stage + Math.sign(gap) * Math.min(Math.abs(gap), rate * dt);\n}\n\nfunction onScroll() {\n  const rects = sections.map((s) => s.getBoundingClientRect());\n  pos = scrollPosition(rects);\n  const mid = window.innerHeight / 2;\n  let active = 0;\n  rects.forEach((r, i) => {\n    if (r.top <= mid) active = i;\n  });\n  target = active + 1;\n}\nwindow.addEventListener(\"scroll\", onScroll, { passive: true });\nwindow.addEventListener(\"resize\", onScroll);\nonScroll(); // page may load already scrolled (reload, anchor link)\n\nexport function update(drop: THREE.Mesh, jar: THREE.Group, honey: THREE.Mesh, drips: THREE.Mesh[], dt: number) {\n  stage = reducedMotion ? target : step(stage, target, dt);\n  document.documentElement.dataset.playhead = stage.toFixed(2);\n\n  // page track: glide between spots while two sections share the screen, rest while one fills it\n  const i = Math.min(Math.floor(pos), SPOTS.length - 2);\n  const t = smooth(0.1, 0.9, pos - i);\n  const a = SPOTS[i];\n  const b = SPOTS[i + 1];\n  const x = a[0] + (b[0] - a[0]) * t;\n  const y = a[1] + (b[1] - a[1]) * t;\n  // damping only smooths mouse-wheel steps; it doesn't lag behind the page\n  dropX = reducedMotion ? x : THREE.MathUtils.damp(dropX, x, 14, dt);\n  dropY = reducedMotion ? y : THREE.MathUtils.damp(dropY, y, 14, dt);\n  drop.position.set(dropX, dropY, 0);\n  drop.visible = stage < 3.1;\n\n  // drips fall into the jar during the last section\n  let landed = 0;\n  drips.forEach((d, k) => {\n    const g = smooth(3.1 + k * 0.01, 3.5 + k * 0.01, stage);\n    landed += g;\n    d.position.y = THREE.MathUtils.lerp(2, jar.position.y + 0.3, g);\n    d.visible = g > 0 && g < 1;\n  });\n\n  // the jar level is the share of drips that have landed: rises as they arrive, drains when rewound\n  honey.scale.y = Math.max(0.001, landed / drips.length);\n}\n"}], "grading": {"expectations": [{"text": "Explains that the drop's position is driven by the time playhead (glide happens inside the section's playhead range), which is why it lags when scrolling back up", "passed": true, "evidence": "notes.md section 1 says the drop's position is computed from stage, a time playhead at 1.5 s per section. When scrolling up the page changes section at once, but stage rewinds slowly at the same speed, and the drop stays put meanwhile. The mechanism is right. It is less precise than it could be: it never says the glide sits in the first 40% of the range, which is why the drop stands still for about 0.9 s before moving, and it implies the full 1.5 s."}, {"text": "The fix drives the drop's position from scroll position (continuous fraction through the sections), so it moves in step with the page in both directions", "passed": true, "evidence": "scene.ts scrollPosition() returns i + clamp01(-top/height), a continuous value from 0 to 3, updated on scroll and resize and also called once at load. The drop glides SPOTS[i] to SPOTS[i+1] over smooth(0.1, 0.9, pos - i), with damp(14) smoothing on top. The sim confirms the drop is at x=2.00 right after scrolling up to Harvest. Caveat (not part of this expectation): drop.visible still uses the time playhead, so see eval_feedback."}, {"text": "The honey level is derived from the drips' progress (e.g. average landing progress), not from its own separate smoothstep range", "passed": true, "evidence": "honey.scale.y = max(0.001, landed / drips.length), where landed is the sum of each drip's g. That is literally the average landing progress, and smooth(3.4, 3.95) is gone. Side effect: because it averages fall progress rather than landings, the jar rises while the drips are still in the air. Sim: drip at y=0.54 of a 2 to -0.7 fall, honey already 0.47. The drip schedule is unchanged too (offsets of 0.01, so all 5 drips fall together)."}, {"text": "Identifies the 0.033 s per-frame dt cap in main.ts as the cause of slow motion on slow machines and replaces it with real elapsed time (with a larger cap)", "passed": true, "evidence": "notes.md section 3: 15 fps gives a real dt of 0.066 s but the cap allows 0.033, so it runs at half speed. main.ts now uses Math.min(clock.getDelta(), 0.25). Sim: after arriving at Jar, the jar is full in 0.78 s at 60 fps, 0.70 s at 10 fps, and 0.75 s at 4 fps, so there is no slow motion."}, {"text": "Drips and honey level still reverse together when scrolling back up (both remain functions of the playhead)", "passed": true, "evidence": "Both are pure functions of stage in the same loop: honey is the average of the same g values that position the drips. Going back up, the playhead rewinds at REWIND=2.5x, and the drips and the jar reverse together."}, {"text": "Keeps the existing structure (scene.ts update function, main.ts loop) and the code remains valid TypeScript", "passed": true, "evidence": "The update signature and the main.ts frame() loop are unchanged, the scroll listener is kept, and index.html is untouched. The code is valid typed TS: scrollPosition takes {top, height}[], and DOMRect[] fits it. It goes beyond the request, though. It adds exported helpers, a prefers-reduced-motion branch, REWIND/CATCH_UP tuning, and a debug write to document.documentElement.dataset.playhead on every frame (an unrequested per-frame DOM write on a page whose complaint is about slow hardware). Structure is preserved, so this passes."}], "summary": {"passed": 6, "failed": 0, "total": 6, "pass_rate": 1.0}, "claims": [{"claim": "Ran node tests with a three stub (1.5 s per section at 60 and 10 fps, rewind under 0.75 s, and more)", "type": "process", "verified": false, "evidence": "No test file is in the submission, so this can't be verified. My own sim agrees on timing: the jar is full in about 0.7-0.8 s at 60/10/4 fps."}, {"claim": "Scrolling up, the drop flies back immediately with the page, no waiting", "type": "quality", "verified": false, "evidence": "Only the position follows the scroll. drop.visible = stage < 3.1 still uses the time playhead. Scrolling up from Jar to Harvest, the drop stays invisible for 0.53 s (sim) while stage rewinds from 4 to 3.1, then pops in. That is a milder form of the user's complaint #1 at the last boundary."}, {"claim": "The jar fills exactly as the drips land", "type": "quality", "verified": false, "evidence": "The jar fills as the drips fall, not as they land. It is about half full while the drips are halfway down and no drip has arrived yet."}, {"claim": "Previously, reloading mid-page left the scene at section 0 until you scrolled", "type": "factual", "verified": true, "evidence": "The original registered only a scroll listener. B now calls onScroll() at load and on resize."}], "user_notes_summary": {"uncertainties": ["Not run in a browser. The author recommends scrolling up and down on the old laptop."], "needs_review": ["Drop visibility still lags by about 0.5 s when scrolling back up out of Jar.", "Unrequested additions: reduced-motion handling, a data-playhead attribute written every frame, REWIND/CATCH_UP."], "workarounds": []}, "eval_feedback": {"suggestions": [{"reason": "No assertion covers drop visibility. B moves the drop's position onto the scroll but leaves visible = stage < 3.1 on the time playhead, so scrolling up out of Jar still hides the drop for about 0.5 s. That is the user's complaint #1 in another form, and it goes uncaught."}, {"assertion": "The honey level is derived from the drips' progress (e.g. average landing progress)", "reason": "The 'average landing progress' example rewards a level that rises while drips are mid-air. Requiring that the level never exceeds the share of drips that have actually landed would be more discriminating."}, {"reason": "No assertion checks that the finale still auto-plays on arrival. B keeps that behaviour and A doesn't. This is the main user-visible difference between the submissions, and the assertions don't see it."}], "overall": "All six pass. The assertions miss the leftover visibility lag and the 'fills during the fall' imprecision."}, "timing": {"executor_duration_seconds": 85.2, "total_duration_seconds": 85.2}}}, {"id": "eval-honey-jar-fix-without_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "check.mjs", "type": "binary", "mime": "text/javascript", "data_uri": "data:text/javascript;base64,Ly8gUXVpY2sgaGVhZGxlc3MgY2hlY2sgb2Ygc2NlbmUudHMgKG5vIGJyb3dzZXIsIG5vIHRocmVlIGluc3RhbGwpOiBub2RlIGNoZWNrLm1qcwovLyBTdHVicyAidGhyZWUiIHdpdGggdGhlIDMgTWF0aFV0aWxzIGhlbHBlcnMgdXNlZCwgYW5kIGZha2VzIDQgc2VjdGlvbnMgb2YgMTAwdmguCmltcG9ydCB7IHJlZ2lzdGVyIH0gZnJvbSAibm9kZTptb2R1bGUiOwppbXBvcnQgYXNzZXJ0IGZyb20gIm5vZGU6YXNzZXJ0L3N0cmljdCI7CmNvbnN0IHRocmVlID0gYGV4cG9ydCBjb25zdCBNYXRoVXRpbHMgPSB7CiAgY2xhbXA6ICh4LCBhLCBiKSA9PiBNYXRoLm1pbihiLCBNYXRoLm1heChhLCB4KSksCiAgbGVycDogKGEsIGIsIHQpID0+IGEgKyAoYiAtIGEpICogdCwKICBkYW1wOiAoeCwgeSwgbCwgZHQpID0+IHggKyAoeSAtIHgpICogKDEgLSBNYXRoLmV4cCgtbCAqIGR0KSkgfTtgOwpyZWdpc3RlcigiZGF0YTp0ZXh0L2phdmFzY3JpcHQsIiArIGVuY29kZVVSSUNvbXBvbmVudChgCiAgZXhwb3J0IGFzeW5jIGZ1bmN0aW9uIHJlc29sdmUocywgYywgbmV4dCkgewogICAgaWYgKHMgPT09ICJ0aHJlZSIpIHJldHVybiB7IHVybDogImRhdGE6dGV4dC9qYXZhc2NyaXB0LCIgKyBlbmNvZGVVUklDb21wb25lbnQoJHtKU09OLnN0cmluZ2lmeSh0aHJlZSl9KSwgc2hvcnRDaXJjdWl0OiB0cnVlIH07CiAgICByZXR1cm4gbmV4dChzLCBjKTsKICB9YCkpOwoKY29uc3QgVkggPSA4MDA7Cmdsb2JhbFRoaXMud2luZG93ID0geyBzY3JvbGxZOiAwLCBpbm5lckhlaWdodDogVkggfTsKZ2xvYmFsVGhpcy5kb2N1bWVudCA9IHsKICBkb2N1bWVudEVsZW1lbnQ6IHsgc2Nyb2xsSGVpZ2h0OiA0ICogVkggfSwKICBxdWVyeVNlbGVjdG9yQWxsOiAoKSA9PiBbMCwgMSwgMiwgM10ubWFwKChrKSA9PiAoeyBnZXRCb3VuZGluZ0NsaWVudFJlY3Q6ICgpID0+ICh7IHRvcDogayAqIFZIIC0gd2luZG93LnNjcm9sbFkgfSkgfSkpLAp9Owpjb25zdCB7IHVwZGF0ZSB9ID0gYXdhaXQgaW1wb3J0KCIuL3NjZW5lLnRzIik7Cgpjb25zdCBtZXNoID0gKCkgPT4gKHsgcG9zaXRpb246IHsgeTogMCwgc2V0KHgsIHkpIHsgdGhpcy54ID0geDsgdGhpcy55ID0geTsgfSB9LCBzY2FsZTogeyB5OiAwIH0sIHZpc2libGU6IHRydWUgfSk7CmNvbnN0IGRyb3AgPSBtZXNoKCksIGhvbmV5ID0gbWVzaCgpLCBqYXIgPSB7IHBvc2l0aW9uOiB7IHk6IC0xIH0gfSwgZHJpcHMgPSBbbWVzaCgpLCBtZXNoKCksIG1lc2goKSwgbWVzaCgpLCBtZXNoKCldOwpjb25zdCBydW4gPSAoc2VjcywgZnBzKSA9PiB7IGZvciAobGV0IHQgPSAwOyB0IDwgc2VjczsgdCArPSAxIC8gZnBzKSB1cGRhdGUoZHJvcCwgamFyLCBob25leSwgZHJpcHMsIDEgLyBmcHMpOyB9OwoKLy8gMS4gc2Nyb2xsIGRvd24gdG8gSGFydmVzdCAoc2VjdGlvbiAyKSwgdGhlbiBiYWNrIHVwIHRvIEhpdmUgKHNlY3Rpb24gMSk6IGRyb3AgaXMgYmFjayB3aXRoaW4gMC4zIHMKd2luZG93LnNjcm9sbFkgPSAyICogVkg7IHJ1bigyLCA2MCk7IGFzc2VydC5lcXVhbChNYXRoLnJvdW5kKGRyb3AucG9zaXRpb24ueCksIDIpOwp3aW5kb3cuc2Nyb2xsWSA9IDEgKiBWSDsgcnVuKDAuMywgNjApOyBhc3NlcnQub2soTWF0aC5hYnMoZHJvcC5wb3NpdGlvbi54ICsgMikgPCAwLjA1LCAiZHJvcCBiYWNrIGF0IEhpdmUgc3BvdDogIiArIGRyb3AucG9zaXRpb24ueCk7CgovLyAyLiBqYXIgbGV2ZWwgZm9sbG93cyB0aGUgbGFuZGVkIGRyaXBzOiBuZXZlciBhYm92ZSBsYW5kZWQgc2hhcmUsIGZ1bGwgd2hlbiBhbGwgbGFuZGVkCmNvbnN0IG1heFkgPSAzICogVkgsIHN0YXJ0ID0gMi41ICogVkg7CmZvciAobGV0IHkgPSBzdGFydDsgeSA8PSBtYXhZOyB5ICs9IDUpIHsKICB3aW5kb3cuc2Nyb2xsWSA9IHk7IHJ1bigxLCA2MCk7CiAgY29uc3QgbGFuZGVkID0gZHJpcHMuZmlsdGVyKChkKSA9PiBNYXRoLmFicyhkLnBvc2l0aW9uLnkgLSAoamFyLnBvc2l0aW9uLnkgKyAwLjMpKSA8IDFlLTMpLmxlbmd0aDsKICBhc3NlcnQub2soaG9uZXkuc2NhbGUueSA8PSBsYW5kZWQgLyBkcmlwcy5sZW5ndGggKyAwLjAwMSwgYGZpbGwgJHtob25leS5zY2FsZS55fSA+IGxhbmRlZCAke2xhbmRlZH1gKTsKICBhc3NlcnQub2soaG9uZXkuc2NhbGUueSA+PSAobGFuZGVkIC0gMSkgLyBkcmlwcy5sZW5ndGggLSAwLjAxLCBgZmlsbCAke2hvbmV5LnNjYWxlLnl9IGxhZ3MgbGFuZGVkICR7bGFuZGVkfWApOwp9CmFzc2VydC5vayhob25leS5zY2FsZS55ID4gMC45OTkpOwoKLy8gMy4gc2FtZSB3YWxsIHRpbWUgLT4gc2FtZSBzdGF0ZSBhdCAxMCBmcHMgYW5kIDYwIGZwcwp3aW5kb3cuc2Nyb2xsWSA9IDA7IHJ1bigzLCA2MCk7IHdpbmRvdy5zY3JvbGxZID0gMS4yICogVkg7IHJ1bigwLjQsIDYwKTsgY29uc3QgZmFzdCA9IGRyb3AucG9zaXRpb24ueDsKd2luZG93LnNjcm9sbFkgPSAwOyBydW4oMywgNjApOyB3aW5kb3cuc2Nyb2xsWSA9IDEuMiAqIFZIOyBydW4oMC40LCAxMCk7IGNvbnN0IHNsb3cgPSBkcm9wLnBvc2l0aW9uLng7CmFzc2VydC5vayhNYXRoLmFicyhmYXN0IC0gc2xvdykgPCAwLjA1LCBgNjBmcHMgJHtmYXN0fSB2cyAxMGZwcyAke3Nsb3d9YCk7CmNvbnNvbGUubG9nKCJvayIpOwo="}, {"name": "index.html", "type": "text", "content": "<canvas id=\"scene\" style=\"position:fixed;inset:0\"></canvas>\n<main>\n  <section style=\"min-height:100vh\">Meadow</section>\n  <section style=\"min-height:100vh\">Hive</section>\n  <section style=\"min-height:100vh\">Harvest</section>\n  <section style=\"min-height:100vh\">Jar</section>\n</main>\n<script type=\"module\" src=\"./main.ts\"></script>\n"}, {"name": "main.ts", "type": "text", "content": "import * as THREE from \"three\";\nimport { update } from \"./scene\";\nimport { drop, jar, honey, drips, renderer, scene, camera } from \"./setup\";\n\nconst clock = new THREE.Clock();\nfunction frame() {\n  // pass the real elapsed time: update() is frame-rate independent, so a slow machine\n  // skips frames instead of playing in slow motion\n  update(drop, jar, honey, drips, clock.getDelta());\n  renderer.render(scene, camera);\n  requestAnimationFrame(frame);\n}\nframe();\n"}, {"name": "notes.md", "type": "text", "content": "# S\u1eeda trang m\u1eadt ong\n\nM\u00ecnh \u0111\u00e3 s\u1eeda c\u1ea3 3 l\u1ed7i v\u00e0 gi\u1eef nguy\u00ean c\u1ea5u tr\u00fac: v\u1eabn l\u00e0 `update(drop, jar, honey, drips, dt)`, v\u1eabn c\u00f3 `SPOTS`, `smooth` v\u00e0 c\u00e1c keyframe theo `stage`. `index.html` kh\u00f4ng c\u1ea7n \u0111\u1ed5i. Ch\u1ec9 s\u1eeda `scene.ts` v\u00e0 `main.ts`.\n\n## 1. Cu\u1ed9n ng\u01b0\u1ee3c l\u00ean th\u00ec gi\u1ecdt m\u1eadt \u0111\u1ee9ng sai ch\u1ed7 kho\u1ea3ng 1 gi\u00e2y r\u1ed3i m\u1edbi bay v\u1ec1\n\n**Nguy\u00ean nh\u00e2n:** `stage` kh\u00f4ng l\u1ea5y t\u1eeb v\u1ecb tr\u00ed cu\u1ed9n. Code ch\u1ec9 bi\u1ebft section n\u00e0o \u0111ang active r\u1ed3i \u0111\u1eb7t `target = active + 1` (m\u1ed9t s\u1ed1 nguy\u00ean). Sau \u0111\u00f3 `stage` t\u1ef1 ch\u1ea1y t\u1edbi target v\u1edbi t\u1ed1c \u0111\u1ed9 c\u1ed1 \u0111\u1ecbnh 1,5 gi\u00e2y cho m\u1ed7i section. Gi\u1ecdt m\u1eadt bay t\u1edbi \u0111i\u1ec3m m\u1edbi trong 40% *\u0111\u1ea7u* c\u1ee7a m\u1ed7i section. V\u00ec v\u1eady khi cu\u1ed9n l\u00ean, `stage` ch\u1ea1y l\u00f9i qua 60% *cu\u1ed1i* tr\u01b0\u1edbc (kho\u1ea3ng 0,9 gi\u00e2y), v\u00e0 trong l\u00fac \u0111\u00f3 gi\u1ecdt m\u1eadt v\u1eabn \u0111\u1ee9ng \u1edf \u0111i\u1ec3m c\u1ee7a section c\u0169. H\u1ebft \u0111o\u1ea1n \u0111\u00f3 n\u00f3 m\u1edbi bay v\u1ec1.\n\n**C\u00e1ch s\u1eeda:** `stage` gi\u1edd \u0111\u01b0\u1ee3c t\u00ednh th\u1eb3ng t\u1eeb `scrollY` (h\u00e0m `scrollStage()`). Section k chi\u1ebfm kho\u1ea3ng stage t\u1eeb k \u0111\u1ebfn k+1. Kho\u1ea3ng n\u00e0y b\u1eaft \u0111\u1ea7u khi m\u00e9p tr\u00ean c\u1ee7a section k ch\u1ea1m gi\u1eefa m\u00e0n h\u00ecnh v\u00e0 k\u1ebft th\u00fac khi section k\u1ebf ti\u1ebfp ch\u1ea1m gi\u1eefa m\u00e0n h\u00ecnh. Ri\u00eang section cu\u1ed1i k\u1ebft th\u00fac \u1edf \u0111\u00e1y trang. Cu\u1ed9n xu\u1ed1ng hay cu\u1ed9n l\u00ean \u0111\u1ec1u cho c\u00f9ng m\u1ed9t `stage`, n\u00ean c\u1ea3nh lu\u00f4n kh\u1edbp v\u1edbi v\u1ecb tr\u00ed cu\u1ed9n. M\u00ecnh v\u1eabn gi\u1eef m\u1ed9t ch\u00fat l\u00e0m m\u01b0\u1ee3t (`THREE.MathUtils.damp`, kho\u1ea3ng 0,1 gi\u00e2y) cho \u0111\u1ee1 gi\u1eadt khi cu\u1ed9n b\u1eb1ng con l\u0103n chu\u1ed9t. H\u00e0m n\u00e0y \u0111\u01b0\u1ee3c t\u00ednh l\u1ea1i m\u1ed7i frame, n\u00ean khi t\u1ea3i l\u1ea1i trang \u1edf gi\u1eefa ch\u1eebng ho\u1eb7c khi \u0111\u1ed5i k\u00edch th\u01b0\u1edbc c\u1eeda s\u1ed5, c\u1ea3nh c\u0169ng \u0111\u00fang ngay. V\u00ec v\u1eady m\u00ecnh \u0111\u00e3 b\u1ecf listener `scroll`.\n\n## 2. H\u0169 \u0111\u1ea7y ch\u1eadm h\u01a1n t\u1ed1c \u0111\u1ed9 c\u00e1c gi\u1ecdt r\u01a1i v\u00e0o\n\n**Nguy\u00ean nh\u00e2n:** hai vi\u1ec7c n\u00e0y c\u00f3 hai m\u1ed1c th\u1eddi gian ri\u00eang, kh\u00f4ng li\u00ean quan \u0111\u1ebfn nhau. C\u00e1c gi\u1ecdt r\u01a1i trong kho\u1ea3ng stage 3.1 \u2192 3.5, m\u1ed7i gi\u1ecdt ch\u1ec9 l\u1ec7ch nhau 0.01 n\u00ean g\u1ea7n nh\u01b0 r\u01a1i c\u00f9ng l\u00fac. C\u00f2n h\u0169 l\u1ea1i \u0111\u1ea7y trong kho\u1ea3ng 3.4 \u2192 3.95. K\u1ebft qu\u1ea3 l\u00e0 h\u0169 b\u1eaft \u0111\u1ea7u d\u00e2ng tr\u01b0\u1edbc khi c\u00f3 gi\u1ecdt n\u00e0o ch\u1ea1m t\u1edbi, v\u00e0 v\u1eabn ti\u1ebfp t\u1ee5c d\u00e2ng m\u1ed9t l\u00fac l\u00e2u sau khi gi\u1ecdt cu\u1ed1i \u0111\u00e3 r\u01a1i xong.\n\n**C\u00e1ch s\u1eeda:** gi\u1edd hai vi\u1ec7c d\u00f9ng chung m\u1ed9t l\u1ecbch. C\u00e1c gi\u1ecdt r\u01a1i l\u1ea7n l\u01b0\u1ee3t, c\u00e1ch \u0111\u1ec1u nhau, trong kho\u1ea3ng 3.1 \u2192 3.95. M\u1ed7i gi\u1ecdt *ch\u1ea1m h\u0169* th\u00ec m\u1ef1c m\u1eadt d\u00e2ng th\u00eam \u0111\u00fang 1/n. V\u00ec m\u1ef1c m\u1eadt \u0111\u01b0\u1ee3c t\u00ednh t\u1eeb ch\u00ednh c\u00e1c gi\u1ecdt, n\u00f3 kh\u00f4ng th\u1ec3 ch\u1ea1y tr\u01b0\u1edbc hay t\u1ee5t sau. S\u1ed1 gi\u1ecdt \u0111\u1ed5i bao nhi\u00eau th\u00ec l\u1ecbch c\u0169ng t\u1ef1 chia l\u1ea1i. Mu\u1ed1n ch\u1ec9nh nh\u1ecbp th\u00ec s\u1eeda ba h\u1eb1ng s\u1ed1 \u1edf \u0111\u1ea7u file: `DRIP_START`, `DRIP_FALL`, `JAR_FULL`.\n\n## 3. Laptop c\u0169 ch\u1ea1y nh\u01b0 slow-motion\n\n**Nguy\u00ean nh\u00e2n:** trong `main.ts` c\u00f3 d\u00f2ng `Math.min(clock.getDelta(), 0.033)`. Khi m\u00e1y ch\u1ec9 ch\u1ea1y \u0111\u01b0\u1ee3c d\u01b0\u1edbi 30fps, v\u00ed d\u1ee5 15fps, m\u1ed7i frame th\u1ef1c t\u1ebf m\u1ea5t 0,066 gi\u00e2y nh\u01b0ng animation ch\u1ec9 \u0111\u01b0\u1ee3c ti\u1ebfn 0,033 gi\u00e2y. K\u1ebft qu\u1ea3 l\u00e0 m\u1ecdi th\u1ee9 ch\u1ea1y b\u1eb1ng m\u1ed9t n\u1eeda t\u1ed1c \u0111\u1ed9 th\u1eadt.\n\n**C\u00e1ch s\u1eeda:** b\u1ecf gi\u1edbi h\u1ea1n \u0111\u00f3 v\u00e0 truy\u1ec1n \u0111\u00fang th\u1eddi gian th\u1ef1c. B\u1ecf \u0111\u01b0\u1ee3c l\u00e0 v\u00ec ph\u1ea7n chuy\u1ec3n \u0111\u1ed9ng ch\u00ednh gi\u1edd \u0111i theo v\u1ecb tr\u00ed cu\u1ed9n ch\u1ee9 kh\u00f4ng theo th\u1eddi gian, c\u00f2n ph\u1ea7n l\u00e0m m\u01b0\u1ee3t d\u00f9ng damping d\u1ea1ng m\u0169, cho c\u00f9ng k\u1ebft qu\u1ea3 \u1edf 10fps hay 60fps. K\u1ec3 c\u1ea3 khi `dt` l\u1edbn (v\u00ed d\u1ee5 quay l\u1ea1i t\u1eeb tab kh\u00e1c), c\u1ea3nh ch\u1ec9 nh\u1ea3y th\u1eb3ng t\u1edbi \u0111\u00fang ch\u1ed7, kh\u00f4ng b\u1ecb v\u1ecdt qu\u00e1. M\u00e1y y\u1ebfu s\u1ebd b\u1ecf b\u1edbt frame ch\u1ee9 kh\u00f4ng ch\u1ea1y ch\u1eadm l\u1ea1i n\u1eefa.\n\n## Ki\u1ec3m tra\n\nC\u00f3 th\u00eam file `check.mjs`, ch\u1ea1y b\u1eb1ng `node check.mjs`. File n\u00e0y gi\u1ea3 l\u1eadp `three` v\u00e0 4 section, r\u1ed3i ki\u1ec3m tra 3 \u0111i\u1ec1u:\n- cu\u1ed9n t\u1eeb Harvest l\u00ean Hive th\u00ec gi\u1ecdt m\u1eadt v\u1ec1 \u0111\u00fang ch\u1ed7 trong v\u00f2ng 0,3 gi\u00e2y;\n- m\u1ef1c m\u1eadt lu\u00f4n b\u1eb1ng s\u1ed1 gi\u1ecdt \u0111\u00e3 r\u01a1i v\u00e0o, v\u00e0 \u0111\u1ea7y \u0111\u00fang khi gi\u1ecdt cu\u1ed1i ch\u1ea1m h\u0169;\n- ch\u1ea1y 10fps v\u00e0 60fps cho c\u00f9ng k\u1ebft qu\u1ea3 sau c\u00f9ng m\u1ed9t kho\u1ea3ng th\u1eddi gian.\n\nB\u1ea3n m\u1edbi ch\u1ea1y ra `ok`. B\u1ea3n g\u1ed1c th\u00ec kh\u00f4ng \u0111\u1ea1t ngay \u1edf b\u01b0\u1edbc \u0111\u1ea7u: sau 0,3 gi\u00e2y gi\u1ecdt m\u1eadt v\u1eabn \u0111\u1ee9ng \u1edf \u0111i\u1ec3m c\u0169.\n\n**L\u01b0u \u00fd:** section cu\u1ed1i (Jar) ch\u1ec9 c\u00f2n kho\u1ea3ng n\u1eeda m\u00e0n h\u00ecnh \u0111\u1ec3 cu\u1ed9n, v\u00ec trang h\u1ebft \u1edf \u0111\u00f3. M\u1ecdi c\u1ea3nh gi\u1ecdt r\u01a1i v\u00e0 h\u0169 \u0111\u1ea7y di\u1ec5n ra trong \u0111o\u1ea1n n\u00e0y. N\u1ebfu b\u1ea1n th\u1ea5y n\u00f3 x\u1ea3y ra nhanh qu\u00e1, ch\u1ec9 c\u1ea7n t\u0103ng `min-height` c\u1ee7a section Jar trong `index.html`, v\u00ed d\u1ee5 l\u00ean `150vh`. Kh\u00f4ng c\u1ea7n s\u1eeda code.\n"}, {"name": "scene.ts", "type": "text", "content": "// Honey landing page: a drop of honey travels through 4 sections; in the last one drips fall and fill a jar.\nimport * as THREE from \"three\";\n\nconst sections = Array.from(document.querySelectorAll<HTMLElement>(\"section\"));\nconst SPOTS: [number, number][] = [[2, 0], [-2, 0], [2, 0], [0, -1]];\n\n// Drips + fill share one schedule inside the last section (stage 3..4):\n// drip k lands at LAND0 + k*gap, and each landed drip adds 1/n of the jar over the next gap.\nconst DRIP_START = 3.1; // first drip leaves\nconst DRIP_FALL = 0.25; // fall duration (in stage units)\nconst JAR_FULL = 3.95; // jar is full here\nconst CATCH_UP = 12; // how fast the scene catches up with the scroll (1/s); higher = snappier\n\nlet stage = NaN;\n\n// Stage is read straight from the scroll position, so it is the same going down or up.\n// Section k plays over stage k..k+1: from when its top crosses the middle of the viewport\n// until the next section's top does (the last one ends at the bottom of the page).\nfunction scrollStage() {\n  const y = window.scrollY;\n  const mid = window.innerHeight / 2;\n  const maxY = document.documentElement.scrollHeight - window.innerHeight;\n  const starts = sections.map((s) => s.getBoundingClientRect().top + y - mid);\n  let k = 0;\n  while (k < starts.length - 1 && y >= starts[k + 1]) k++;\n  const end = k < starts.length - 1 ? starts[k + 1] : maxY;\n  return k + THREE.MathUtils.clamp((y - starts[k]) / Math.max(1, end - starts[k]), 0, 1);\n}\n\nconst smooth = (a: number, b: number, n: number) => {\n  const t = Math.min(1, Math.max(0, (n - a) / (b - a)));\n  return t * t * (3 - 2 * t);\n};\n\nexport function update(drop: THREE.Mesh, jar: THREE.Group, honey: THREE.Mesh, drips: THREE.Mesh[], dt: number) {\n  // ease toward the scroll position; exponential damping gives the same result at any frame rate\n  const target = scrollStage();\n  stage = Number.isNaN(stage) ? target : THREE.MathUtils.damp(stage, target, CATCH_UP, dt);\n\n  // the drop glides to this section's spot during the first 40% of the section\n  const i = Math.min(Math.floor(stage), SPOTS.length - 1);\n  const t = smooth(0, 0.4, stage - i);\n  const a = SPOTS[Math.max(0, i - 1)];\n  const b = SPOTS[i];\n  drop.position.set(a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, 0);\n  drop.visible = stage < DRIP_START;\n\n  // drips fall into the jar one after another; the jar rises by 1/n as each one lands\n  const n = drips.length;\n  const gap = (JAR_FULL - DRIP_START - DRIP_FALL) / Math.max(1, n);\n  let fill = 0;\n  drips.forEach((d, k) => {\n    const start = DRIP_START + k * gap;\n    const g = smooth(start, start + DRIP_FALL, stage);\n    d.position.y = THREE.MathUtils.lerp(2, jar.position.y + 0.3, g);\n    d.visible = g > 0 && g < 1;\n    fill += THREE.MathUtils.clamp((stage - (start + DRIP_FALL)) / gap, 0, 1) / n;\n  });\n\n  // jar fills up exactly as fast as the drips land\n  honey.scale.y = Math.max(0.001, fill);\n}\n"}], "grading": {"expectations": [{"text": "Explains that the drop's position is driven by the time playhead (glide happens inside the section's playhead range), which is why it lags when scrolling back up", "passed": true, "evidence": "notes.md section 1 says stage is not read from scroll. target = active + 1 is an integer, and stage runs toward it at a fixed 1.5 s per section. The drop glides only in the first 40% of each section, so going back up the playhead first rewinds through the last 60% (about 0.9 s) while the drop stays at the old spot. That matches the original scene.ts lines 26-33 exactly, and it accounts for the user's 'about one second'."}, {"text": "The fix drives the drop's position from scroll position (continuous fraction through the sections), so it moves in step with the page in both directions", "passed": true, "evidence": "scene.ts scrollStage() computes k + clamp((scrollY - starts[k]) / (end - starts[k])), a continuous fraction read every frame. stage = damp(stage, scrollStage(), 12, dt), and the drop uses stage. My headless sim matched: the drop is at x=2 at scrollY 0.5VH, x=-2 at 0.9VH, and back at x=2 at 2VH. Scrolling up from the bottom to Harvest, the drop is visible again after 0.07 s. In A's check.mjs, Harvest back to Hive lands within 0.05 units in 0.3 s. The time playhead and the scroll listener are both gone."}, {"text": "The honey level is derived from the drips' progress (e.g. average landing progress), not from its own separate smoothstep range", "passed": true, "evidence": "The separate smooth(3.4, 3.95, stage) is removed. fill is now summed inside the drips loop: each drip adds clamp((stage - (start_k + DRIP_FALL)) / gap, 0, 1) / n, keyed to that drip's own landing time, and the drip constants also schedule the jar. This is not a literal average of g. The intent is met: the level is a function of the drips' schedule, it cannot run ahead of landings, and it is full just after the last drip lands. check.mjs asserts landed-1 <= fill*n <= landed at every scroll step, and it passes."}, {"text": "Identifies the 0.033 s per-frame dt cap in main.ts as the cause of slow motion on slow machines and replaces it with real elapsed time (with a larger cap)", "passed": true, "evidence": "notes.md section 3 identifies Math.min(clock.getDelta(), 0.033): at 15 fps a frame lasts 0.066 s but the animation advances only 0.033 s, so it runs at half speed. main.ts now passes clock.getDelta() with no cap at all. A different mechanism than the expectation names, but the intent is met: everything is scroll-derived, and the only use of dt is exponential damping (1 - exp(-\u03bb\u00b7dt)), which cannot overshoot. A huge dt, such as returning from a background tab, just snaps to the correct scroll state. So a cap has nothing to protect against here, and check.mjs test 3 shows 10 fps and 60 fps agree."}, {"text": "Drips and honey level still reverse together when scrolling back up (both remain functions of the playhead)", "passed": true, "evidence": "Both the drip y positions and fill are pure functions of stage, in the same loop. In A, stage is the damped scroll position, not a time playhead, so both reverse in lockstep with the scroll. The sim confirms it: at 2.75VH honey is 0.25 with 2 drips in the air, and at 3VH honey is 1.00."}, {"text": "Keeps the existing structure (scene.ts update function, main.ts loop) and the code remains valid TypeScript", "passed": true, "evidence": "The update(drop, jar, honey, drips, dt) signature, SPOTS, smooth, the 40%-glide drop block, and the main.ts frame() loop are all unchanged. The diff is small: scrollStage() plus three constants, and the scroll listener is removed. index.html is untouched. The code uses only typed APIs (THREE.MathUtils.clamp/damp/lerp). It runs under Node 22 type-stripping (node check.mjs prints ok), but tsc was not run."}], "summary": {"passed": 6, "failed": 0, "total": 6, "pass_rate": 1.0}, "claims": [{"claim": "check.mjs passes on the new code", "type": "factual", "verified": true, "evidence": "Ran node check.mjs under Node v22.22.3: output 'ok'."}, {"claim": "Original code fails the first check (drop still at old spot after 0.3 s)", "type": "factual", "verified": true, "evidence": "Consistent with the original logic: after 0.3 s of rewind, stage is about 2.8, still past 2.4, so t=1 and the drop sits at SPOTS[2]. The check itself was not re-run against the original."}, {"claim": "The last section only has about half a screen of scroll", "type": "factual", "verified": true, "evidence": "starts[3] = 2.5VH and maxY = 3VH, so stage 3..4 maps to 0.5VH of scroll. The author flagged this honestly and suggested raising the Jar section's min-height."}], "user_notes_summary": {"uncertainties": [], "needs_review": ["The drips and jar no longer play automatically when you arrive at the Jar section. They are now scrubbed by the last 0.5VH of scroll. A fling to the bottom fills the jar in about 0.2 s (sim: honey starts at 0.07 s and is full at 0.27 s). If you stop mid-way, drips hang frozen in mid-air (sim at 2.75VH: 2 drips visible, stationary). The notes cover the short scroll range but not the loss of the timed 1.5 s finale."], "workarounds": ["The notes suggest raising the Jar section's min-height to 150vh if the finale feels too fast."]}, "eval_feedback": {"suggestions": [{"assertion": "Identifies the 0.033 s per-frame dt cap ... (with a larger cap)", "reason": "This is tied to one design. A fully scroll-derived scene with exponential damping needs no cap, and A correctly drops it. The assertion should check that dt is real elapsed time and that the result is frame-rate independent."}, {"assertion": "Drips and honey level still reverse together when scrolling back up (both remain functions of the playhead)", "reason": "This assumes a time playhead survives. It passes trivially for a pure-scrub design, and it does not catch the real tradeoff: whether the finale still auto-plays on arrival or now needs scrolling, and whether drips can freeze mid-air. Add an assertion about the finale's behaviour on arrival, or require that a design change there is flagged to the user."}, {"reason": "No assertion checks drop visibility when scrolling up out of the Jar section. Visibility is gated on stage < 3.1, and a fix that moves only the position (not the visibility) can still leave the drop missing for a while. That separates A (0.07 s) from B (0.53 s)."}], "overall": "All six pass, but the assertions don't discriminate between the two submissions. They miss the main behavioural tradeoff (scrubbed vs auto-played finale) and the leftover visibility lag."}, "timing": {"executor_duration_seconds": 155.8, "total_duration_seconds": 155.8}}}, {"id": "eval-planet-gsap-refactor-with_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "index.html", "type": "text", "content": "<!doctype html>\n<html>\n<head>\n  <style>\n    /* One screen per chapter; the morph plays in time when a chapter arrives instead of being scrubbed. */\n    html { scroll-behavior: smooth; } /* nav jumps glide through the chapters instead of teleporting */\n    .chapter { min-height: 100vh; min-height: 100svh; }\n    .panel { min-height: 100vh; min-height: 100svh; display: flex; align-items: center; padding: 0 8vw; box-sizing: border-box; }\n    /* Phones: planet sits above the copy (story.js uses the same 768px breakpoint). */\n    @media (max-width: 767.98px) { .panel { align-items: flex-end; padding-bottom: 12vh; } }\n    @media (min-width: 768px) { #c1 .panel { justify-content: flex-end; } } /* planet is on the left here (X[1] = -2) */\n    @media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }\n    #scene { position: fixed; inset: 0; z-index: -1; }\n    nav { position: fixed; top: 0; right: 0; }\n  </style>\n</head>\n<body>\n  <canvas id=\"scene\"></canvas>\n  <nav><a href=\"#c0\">Dust</a> <a href=\"#c1\">Rock</a> <a href=\"#c2\">Ocean</a> <a href=\"#c3\">Life</a></nav>\n  <section class=\"chapter\" id=\"c0\"><div class=\"panel\"><h2>Dust</h2><p>Grains clump together.</p></div></section>\n  <section class=\"chapter\" id=\"c1\"><div class=\"panel\"><h2>Rock</h2><p>A molten ball cools.</p></div></section>\n  <section class=\"chapter\" id=\"c2\"><div class=\"panel\"><h2>Ocean</h2><p>Rain for a million years.</p></div></section>\n  <section class=\"chapter\" id=\"c3\"><div class=\"panel\"><h2>Life</h2><p>Green spreads over the land.</p></div></section>\n  <script type=\"module\" src=\"./story.js\"></script>\n</body>\n</html>\n"}, {"name": "journey.check.mjs", "type": "binary", "mime": "text/javascript", "data_uri": "data:text/javascript;base64,Ly8gbm9kZSBqb3VybmV5LmNoZWNrLm1qcwppbXBvcnQgYXNzZXJ0IGZyb20gIm5vZGU6YXNzZXJ0L3N0cmljdCI7CmltcG9ydCB7IHN0ZXAsIHNjcm9sbFBvc2l0aW9uLCBnbGlkZSwgYWN0aXZlQ2hhcHRlciB9IGZyb20gIi4vam91cm5leS5qcyI7Cgpjb25zdCB0aW1lVG8gPSAoZnJvbSwgdG8sIGR0ID0gMSAvIDYwKSA9PiB7IGxldCBzID0gZnJvbSwgdCA9IDA7IHdoaWxlIChzICE9PSB0bykgeyBzID0gc3RlcChzLCB0bywgZHQpOyB0ICs9IGR0OyBhc3NlcnQub2sodG8gPiBmcm9tID8gcyA8PSB0byA6IHMgPj0gdG8sICJvdmVyc2hvb3QiKTsgfSByZXR1cm4gdDsgfTsKY29uc3Qgb25lID0gdGltZVRvKDAsIDEpOwphc3NlcnQub2soTWF0aC5hYnMob25lIC0gMS42KSA8IDAuMDUsIGBvbmUgY2hhcHRlciB+MS42cywgZ290ICR7b25lfWApOwphc3NlcnQub2sodGltZVRvKDAsIDQpIDwgMywgIm5hdiBqdW1wIDAtPjQgdW5kZXIgM3MiKTsKYXNzZXJ0Lm9rKHRpbWVUbygyLCAxKSA8IG9uZSAvIDIsICJyZXdpbmQgZmFzdGVyIHRoYW4gaGFsZiIpOwphc3NlcnQuZXF1YWwoc3RlcCgwLjk5LCAxLCAwLjI1KSwgMSwgImxhbmRzIGV4YWN0bHkiKTsKYXNzZXJ0Lm9rKE1hdGguYWJzKHRpbWVUbygwLCAxLCAwLjEpIC0gdGltZVRvKDAsIDEsIDEgLyAxNDQpKSA8IDAuMSwgImZyYW1lLXJhdGUgaW5kZXBlbmRlbnQiKTsKCmNvbnN0IEggPSA4MDAsIHJlY3RzID0gKHkpID0+IFswLCAxLCAyLCAzXS5tYXAoKGkpID0+ICh7IHRvcDogaSAqIEggLSB5LCBoZWlnaHQ6IEggfSkpOwphc3NlcnQuZXF1YWwoc2Nyb2xsUG9zaXRpb24ocmVjdHMoMCkpLCAwKTsKYXNzZXJ0LmVxdWFsKHNjcm9sbFBvc2l0aW9uKHJlY3RzKEggLyAyKSksIDAuNSk7CmFzc2VydC5lcXVhbChzY3JvbGxQb3NpdGlvbihyZWN0cygzICogSCkpLCAzKTsKYXNzZXJ0LmVxdWFsKGFjdGl2ZUNoYXB0ZXIocmVjdHMoSCAvIDIgLSAxKSwgSCksIDApOwphc3NlcnQuZXF1YWwoYWN0aXZlQ2hhcHRlcihyZWN0cyhIIC8gMiksIEgpLCAxKTsKCmNvbnN0IFggPSBbMiwgLTIsIDIsIDBdOwphc3NlcnQuZXF1YWwoZ2xpZGUoWCwgMCksIDIpOyBhc3NlcnQuZXF1YWwoZ2xpZGUoWCwgMS4wNSksIC0yKTsgYXNzZXJ0LmVxdWFsKGdsaWRlKFgsIDEuNSksIDApOyBhc3NlcnQuZXF1YWwoZ2xpZGUoWCwgMyksIDApOwpjb25zb2xlLmxvZygib2siLCB7IG9uZUNoYXB0ZXI6IG9uZS50b0ZpeGVkKDIpLCBqdW1wMHRvNDogdGltZVRvKDAsIDQpLnRvRml4ZWQoMiksIHJld2luZDogdGltZVRvKDIsIDEpLnRvRml4ZWQoMikgfSk7Cg=="}, {"name": "journey.js", "type": "text", "content": "// Pure helpers for the scroll-synced planet. No DOM, no three.js, so `node journey.check.mjs` can test them.\n\nconst SECONDS_PER_CHAPTER = 1.6; // one chapter's morph, played in real time\nconst CATCH_UP = 3; // extra speed per chapter of backlog (nav jumps)\nconst REWIND = 2.5; // scrolling back up undoes faster than it played\n\nexport const clamp01 = (n) => Math.min(1, Math.max(0, n));\nexport const smoothstep = (a, b, n) => {\n  const t = clamp01((n - a) / (b - a));\n  return t * t * (3 - 2 * t);\n};\n\n/** Frame-rate independent exponential approach. */\nexport const damp = (current, target, lambda, dt) => current + (target - current) * (1 - Math.exp(-lambda * dt));\n\n/** Playhead speed in chapters per second for a given distance to the target. */\nexport const playRate = (gap) =>\n  ((gap < 0 ? REWIND : 1) * (1 + CATCH_UP * Math.max(0, Math.abs(gap) - 1))) / SECONDS_PER_CHAPTER;\n\n/** Moves `stage` toward `target` by `dt` seconds of play, never overshooting. */\nexport function step(stage, target, dt) {\n  const gap = target - stage;\n  return stage + Math.sign(gap) * Math.min(Math.abs(gap), playRate(gap) * dt);\n}\n\n/** Page position in chapters: i when chapter i's top is at the top of the screen, fractional between. */\nexport function scrollPosition(rects) {\n  let pos = 0;\n  rects.forEach((r, i) => {\n    if (r.top <= 0) pos = i + clamp01(-r.top / r.height);\n  });\n  return Math.min(pos, rects.length - 1);\n}\n\n/** Chapter covering the middle of the screen. */\nexport function activeChapter(rects, viewportHeight) {\n  let active = 0;\n  rects.forEach((r, i) => {\n    if (r.top <= viewportHeight / 2) active = i;\n  });\n  return active;\n}\n\n/** Value at page position `pos`, gliding frames[i] -> frames[i+1] while both chapters share the screen. */\nexport function glide(frames, pos) {\n  const i = Math.min(Math.floor(pos), frames.length - 1);\n  if (i >= frames.length - 1) return frames[frames.length - 1];\n  const t = smoothstep(0.1, 0.9, pos - i);\n  return frames[i] + (frames[i + 1] - frames[i]) * t;\n}\n"}, {"name": "notes.md", "type": "text", "content": "# Planet story: one screen per chapter\n\nGSAP and ScrollTrigger are gone. Three.js stays. Each chapter is now one screen tall (`min-height: 100svh`) and nothing is pinned.\n\n## How it works now\n\nThe scene runs on two tracks:\n\n- **Position follows the page.** The planet's x is computed from the scroll position: chapter i sits at `X[i]`, and the planet moves to `X[i+1]` while both chapters are on screen. It is lightly damped to smooth out mouse-wheel steps. Because it comes straight from the scroll position, scrolling back up moves the planet back at the same pace as the page.\n- **The morph plays when you arrive.** Whichever chapter covers the middle of the screen is the active one, and chapter i owns morph `i \u2192 i+1`. When a chapter becomes active, its morph plays out fully in real time (about 1.6 s). You don't scroll through it.\n  - **Scrolling back up** rewinds the morph about 2.5\u00d7 faster than it played. It is always a pure function of the playhead, so nothing glitches or sticks.\n  - **Nav links** scroll smoothly (`scroll-behavior: smooth`), so the planet glides across rather than teleporting. The morph catches up through the skipped chapters faster the further behind it is. Dust \u2192 Life takes about 2.8 s instead of 6.4 s, and it never overshoots.\n  - **Reduced motion:** the morph jumps straight to its target, the planet doesn't glide, and smooth scrolling is off.\n\n## Files\n\n- `index.html`: removed the 300vh height and the pin, and added smooth scroll. On phones (below 768 px) the copy moves to the bottom and the planet sits centered above it. Before, `x = \u00b12` put it off-screen on phones. On wide screens the Rock chapter's copy is right-aligned because the planet sits on the left there.\n- `story.js`: GSAP timelines are replaced by a scroll listener and one rAF loop. I also fixed two existing bugs. `renderer.setSize` was running every frame, and the camera aspect was never updated on resize. Both now happen in a resize handler.\n- `journey.js` (new): pure helpers (`step`, `scrollPosition`, `activeChapter`, `glide`, `damp`). Tune `SECONDS_PER_CHAPTER`, `CATCH_UP` and `REWIND` here.\n- `journey.check.mjs` (new): run `node journey.check.mjs`. It checks that one chapter takes about 1.6 s, a 0\u21924 jump takes under 3 s, a rewind takes under half the forward time, the playhead never overshoots and timing doesn't depend on frame rate, plus the scroll/active-chapter maths. It passes.\n\nFor debugging or e2e tests, `<html>` carries `data-journey=\"running|idle\"` and `data-playhead=\"2.00\"`.\n\n## Not verified\n\nI had no browser and no `planet.js`, so nothing has been looked at on screen. Please check each chapter at 390, 768, 1366 and 1920 px. The \"Life\" chapter puts the planet at `x = 0` (center), and on wide screens it may sit behind the copy. Moving the copy or changing `X[3]` would fix it if so.\n\nThe loop also renders every frame, as it did before. If `planet.js` has no idle animation, it could stop rendering once idle to save battery.\n"}, {"name": "story.js", "type": "text", "content": "import * as THREE from \"three\";\nimport { createPlanet } from \"./planet.js\"; // planet.setMorph(0..4): dust -> rock -> ocean -> life\nimport { step, damp, scrollPosition, activeChapter, glide } from \"./journey.js\";\n\n// Two tracks:\n// - page track (`pos`): where the planet sits. Follows the scroll exactly, so it reverses for free.\n// - playhead (`stage`): the morph. Chapter i owns stage i..i+1 and plays it in real time once the\n//   chapter covers the middle of the screen, so chapters can be one screen tall.\n\nconst renderer = new THREE.WebGLRenderer({ canvas: document.querySelector(\"#scene\"), alpha: true, antialias: true });\nconst scene = new THREE.Scene();\nconst camera = new THREE.PerspectiveCamera(35, innerWidth / innerHeight, 0.1, 100);\ncamera.position.z = 8;\nconst planet = createPlanet();\nscene.add(planet.object);\n\nconst X = [2, -2, 2, 0]; // where the planet sits in each chapter (wide screens)\nconst NARROW = 768; // same breakpoint as the CSS media query in index.html\nconst NARROW_Y = 1.2; // on phones the planet sits above the copy instead of beside it\n\nconst chapters = [...document.querySelectorAll(\".chapter\")];\nconst root = document.documentElement;\nconst reducedMotion = matchMedia(\"(prefers-reduced-motion: reduce)\");\n\nlet pos = 0; // page track\nlet target = 1; // playhead target = active chapter + 1\nlet stage = 0; // playhead, also the morph value\nlet last = performance.now();\n\nfunction onScroll() {\n  const rects = chapters.map((el) => el.getBoundingClientRect());\n  pos = scrollPosition(rects);\n  target = activeChapter(rects, innerHeight) + 1;\n}\n\nfunction onResize() {\n  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));\n  renderer.setSize(innerWidth, innerHeight);\n  camera.aspect = innerWidth / innerHeight;\n  camera.updateProjectionMatrix();\n  onScroll();\n}\n\nfunction frame(now) {\n  const dt = Math.min(0.25, (now - last) / 1000); // wall clock, so slow devices keep the same timing\n  last = now;\n\n  const narrow = innerWidth < NARROW;\n  const x = narrow ? 0 : glide(X, pos);\n  const y = narrow ? NARROW_Y : 0;\n\n  if (reducedMotion.matches) {\n    stage = target;\n    planet.object.position.set(x, y, 0);\n  } else {\n    stage = step(stage, target, dt);\n    const p = planet.object.position;\n    p.x = damp(p.x, x, 14, dt); // hides mouse-wheel steps without visible lag\n    p.y = damp(p.y, y, 14, dt);\n  }\n\n  planet.setMorph(stage);\n  root.dataset.journey = stage === target ? \"idle\" : \"running\";\n  root.dataset.playhead = stage.toFixed(2);\n\n  renderer.render(scene, camera);\n  requestAnimationFrame(frame);\n}\n\naddEventListener(\"scroll\", onScroll, { passive: true });\naddEventListener(\"resize\", onResize);\nonResize();\nplanet.object.position.set(innerWidth < NARROW ? 0 : glide(X, pos), innerWidth < NARROW ? NARROW_Y : 0, 0); // no glide-in on load\nrequestAnimationFrame(frame);\n"}], "grading": {"expectations": [{"text": "Chapters become about one viewport tall and the 300vh pinned scrubbing is removed", "passed": true, "evidence": "index.html: `.chapter { min-height: 100vh; min-height: 100svh; }` and `.panel { min-height: 100svh }`. The 300vh rule and `position: relative` are gone. story.js no longer imports gsap/ScrollTrigger, so there is no pin and no scrub."}, {"text": "The morph plays in real time when a chapter becomes the active one, instead of being scrubbed by scroll distance", "passed": true, "evidence": "story.js onScroll sets `target = activeChapter(rects, innerHeight) + 1` (activeChapter = last chapter whose top <= innerHeight/2). frame() advances `stage = step(stage, target, dt)` using wall-clock dt, and step() moves at playRate = 1/1.6 chapters/s for a 1-chapter gap. The scroll only picks the target and never sets stage. Running `node journey.check.mjs` prints `oneChapter: '1.62'`."}, {"text": "The planet's position between chapters follows the scroll continuously (scroll-linked), separately from the morph timing", "passed": true, "evidence": "pos = scrollPosition(rects) (fractional chapter index taken from getBoundingClientRect). x = glide(X, pos) smoothsteps X[i] -> X[i+1] across 0.1..0.9 of the scroll between chapters, with a light damp (lambda 14) only to smooth wheel steps. This is independent of `stage`. Caveat: below 768px, x is locked to 0 and y to 1.2, so on phones the planet does not move with scroll at all. That was an unrequested layout change, though it does fix the original's off-screen x=\u00b12 on phones."}, {"text": "Jumping several chapters via nav links fast-forwards through the skipped morphs (speed grows with the backlog) instead of playing each at normal speed or queueing", "passed": true, "evidence": "playRate(gap) = (1 + 3*max(0,|gap|-1))/1.6, so speed grows linearly with the backlog. A single playhead means nothing queues. `html { scroll-behavior: smooth }` makes the nav glide, so the planet's x sweeps through the intermediate chapters too. The check script gives `jump0to4: '2.82'` against 6.4 s at normal speed, and asserts there is no overshoot and that the playhead lands exactly."}, {"text": "Scrolling back up rewinds the morph to the end state of the chapter now on screen, at least as fast as forward", "passed": true, "evidence": "When scrolling up, target becomes activeChapter+1, which is the end state of the on-screen chapter. For gap<0, playRate multiplies by REWIND=2.5, and the catch-up term also applies. The check asserts rewind < half of forward and prints `rewind: '0.65'` against 1.62 forward. Position reverses exactly because it is a pure function of scroll."}, {"text": "prefers-reduced-motion is respected", "passed": true, "evidence": "story.js checks matchMedia live every frame. Under reduce it sets `stage = target` and `position.set(x, y, 0)` with no damping. index.html: `@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }`. Position still tracks scroll in that mode, which is direct manipulation and acceptable."}], "summary": {"passed": 6, "failed": 0, "total": 6, "pass_rate": 1.0}, "claims": [{"claim": "journey.check.mjs passes", "type": "factual", "verified": true, "evidence": "Ran it with node: `ok { oneChapter: '1.62', jump0to4: '2.82', rewind: '0.65' }`."}, {"claim": "Fixed renderer.setSize every frame and the missing camera aspect update on resize", "type": "factual", "verified": true, "evidence": "onResize() handles setPixelRatio, setSize, aspect and updateProjectionMatrix. frame() no longer calls setSize."}, {"claim": "Rewind is always a pure function of the playhead, so nothing glitches", "type": "quality", "verified": true, "evidence": "setMorph(stage) is the only morph write, and stage moves monotonically toward target without overshoot."}], "user_notes_summary": {"uncertainties": ["Not run in a browser and planet.js was unavailable, so nothing was checked visually; the Life chapter at x=0 may sit behind the copy on wide screens"], "needs_review": ["Unrequested layout changes: phone layout (planet centered above the copy, x no longer moves), and #c1 copy right-aligned on wide screens"], "workarounds": []}, "other_observations": ["Minor: `last = performance.now()` is taken at module eval, and the first rAF timestamp can be slightly earlier than that, giving a negative dt on frame 1. step() then moves stage a hair below 0, and setMorph receives about -0.001 for one frame. It is not clamped to 0..4. Harmless unless planet.js indexes arrays by morph.", "Writes data-journey/data-playhead to <html> every frame. This is cheap, but it is a DOM attribute mutation per frame that was added for debugging.", "Adds a new file (journey.js) plus a check script. The split is reasonable because it makes the timing logic testable in node."], "eval_feedback": {"suggestions": [{"assertion": "Jumping several chapters via nav links fast-forwards through the skipped morphs (speed grows with the backlog)", "reason": "The parenthetical names a mechanism. A critically damped spring also avoids queueing, and its peak speed scales with distance, so it satisfies the intent without an explicit backlog-based rate. Phrase it as an outcome: 'a multi-chapter jump finishes in well under N x the one-chapter time and passes through the intermediate morphs'."}, {"reason": "No expectation covers unrequested design changes. This submission altered the phone layout and the planet's phone positioning, and right-aligned the Rock copy. A user would notice. Consider an assertion that layout and positions are preserved unless a change is called out."}, {"reason": "No expectation checks reversal mid-morph (scrolling back up while a morph is still playing) for continuity, which is the most likely 'glitch' the user meant."}], "overall": "The expectations capture the core design well. Expectation 4 is somewhat tied to one mechanism, and nothing checks for scope creep or mid-morph reversal."}, "timing": {"executor_duration_seconds": 97.0, "total_duration_seconds": 97.0}}}, {"id": "eval-planet-gsap-refactor-without_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "index.html", "type": "text", "content": "<!doctype html>\n<html>\n<head>\n  <style>\n    .chapter { height: 100vh; }\n    .panel { height: 100vh; display: flex; align-items: center; padding: 0 8vw; }\n    #scene { position: fixed; inset: 0; z-index: -1; }\n    nav { position: fixed; top: 0; right: 0; }\n  </style>\n</head>\n<body>\n  <canvas id=\"scene\"></canvas>\n  <nav><a href=\"#c0\">Dust</a> <a href=\"#c1\">Rock</a> <a href=\"#c2\">Ocean</a> <a href=\"#c3\">Life</a></nav>\n  <section class=\"chapter\" id=\"c0\"><div class=\"panel\"><h2>Dust</h2><p>Grains clump together.</p></div></section>\n  <section class=\"chapter\" id=\"c1\"><div class=\"panel\"><h2>Rock</h2><p>A molten ball cools.</p></div></section>\n  <section class=\"chapter\" id=\"c2\"><div class=\"panel\"><h2>Ocean</h2><p>Rain for a million years.</p></div></section>\n  <section class=\"chapter\" id=\"c3\"><div class=\"panel\"><h2>Life</h2><p>Green spreads over the land.</p></div></section>\n  <script type=\"module\" src=\"./story.js\"></script>\n</body>\n</html>\n"}, {"name": "notes.md", "type": "text", "content": "# Planet story: chapters are now one screen tall, and GSAP is gone\n\n## What changed\n- **index.html**: `.chapter` is now `100vh` (it was `300vh`). Nothing is pinned any more, so the whole story takes 4 screens of scrolling instead of 12.\n- **story.js**: I removed GSAP and ScrollTrigger. three.js is still used, and so is `createPlanet()`.\n  - Scroll no longer drives the morph directly. An `IntersectionObserver` watches a line across the middle of the viewport, and whichever chapter crosses that line sets the target: `morph = i + 1` and `x = X[i]`.\n  - The planet then animates toward that target over time, using a critically damped spring that runs in the existing rAF loop.\n  - Small fixes I made along the way:\n    - `renderer.setSize` used to run every frame, which resets the canvas each time. It now runs only on `resize`.\n    - The camera aspect ratio is now updated on resize too (before, it never was).\n    - If the user has `prefers-reduced-motion` set, the planet jumps straight to the target with no animation.\n\n## How it behaves now\n- **Landing on a chapter:** the full morph for that chapter plays, for example rock to ocean, in about 1\u20131.5s. How far into the chapter you scroll makes no difference. Loading the page plays dust to rock for chapter 1. Opening `#c3` directly plays the full dust to life sequence.\n- **Scrolling back up:** the spring always starts from the planet's current morph and speed. If you reverse halfway through a morph, it slows down and goes back smoothly instead of jumping. It also stops exactly at the target with no overshoot.\n- **Nav links that jump several chapters:** a jump from Rock to Life moves morph from 2 to 4 (and x to match) in one smooth motion. It passes through the ocean look along the way and takes about as long as a one-chapter step, so long jumps don't drag.\n\n## Checks\nI simulated the spring in node (no browser):\n\n| Case | Time to settle within 1% | Notes |\n|---|---|---|\n| 0 to 1 | ~1.5s | |\n| 1 to 4 | ~1.75s | |\n| Reversed mid-flight | \u2014 | Smooth return, no snap |\n\n## Tuning\n- `K` in story.js sets the speed. A higher value makes the morph snappier.\n- The chapter switches when it crosses the middle of the screen. To change where that happens, edit `rootMargin`.\n"}, {"name": "story.js", "type": "text", "content": "import * as THREE from \"three\";\nimport { createPlanet } from \"./planet.js\"; // planet.setMorph(0..4): dust -> rock -> ocean -> life\n\nconst renderer = new THREE.WebGLRenderer({ canvas: document.querySelector(\"#scene\"), alpha: true, antialias: true });\nconst scene = new THREE.Scene();\nconst camera = new THREE.PerspectiveCamera(35, innerWidth / innerHeight, 0.1, 100);\ncamera.position.z = 8;\nconst planet = createPlanet();\nscene.add(planet.object);\n\nfunction resize() {\n  renderer.setSize(innerWidth, innerHeight);\n  camera.aspect = innerWidth / innerHeight;\n  camera.updateProjectionMatrix();\n}\naddEventListener(\"resize\", resize);\nresize();\n\nconst X = [2, -2, 2, 0]; // where the planet sits in each chapter\nconst target = { morph: 0, x: 0 };\nconst cur = { morph: 0, x: 0 };\nconst vel = { morph: 0, x: 0 };\n\n// The chapter crossing the middle of the viewport is the active one. Scroll only picks the\n// target state; the animation itself runs on time, so a one-screen chapter still plays its full morph.\nconst chapters = [...document.querySelectorAll(\".chapter\")];\nconst io = new IntersectionObserver(\n  (entries) => {\n    for (const e of entries) {\n      if (!e.isIntersecting) continue;\n      const i = chapters.indexOf(e.target);\n      target.morph = i + 1;\n      target.x = X[i];\n    }\n  },\n  { rootMargin: \"-50% 0px -50% 0px\" },\n);\nchapters.forEach((ch) => io.observe(ch));\n\n// Critically damped spring: always continues from the current value and velocity, so reversing\n// mid-animation is seamless, and a nav jump of 3 chapters settles in about the same time (~1.5s) as a jump of 1. Raise K for snappier.\nconst K = 20, C = 2 * Math.sqrt(K);\nconst reduceMotion = matchMedia(\"(prefers-reduced-motion: reduce)\");\nlet last = performance.now();\n\nfunction frame(now) {\n  const dt = Math.min((now - last) / 1000, 1 / 30); // clamp: background tabs / long frames stay stable\n  last = now;\n  for (const k in cur) {\n    if (reduceMotion.matches) { cur[k] = target[k]; vel[k] = 0; continue; }\n    vel[k] += (K * (target[k] - cur[k]) - C * vel[k]) * dt;\n    cur[k] += vel[k] * dt;\n  }\n  planet.setMorph(Math.min(4, Math.max(0, cur.morph)));\n  planet.object.position.x = cur.x;\n  renderer.render(scene, camera);\n  requestAnimationFrame(frame);\n}\nrequestAnimationFrame(frame);\n"}], "grading": {"expectations": [{"text": "Chapters become about one viewport tall and the 300vh pinned scrubbing is removed", "passed": true, "evidence": "index.html: `.chapter { height: 100vh; }`. story.js has no gsap/ScrollTrigger import, so there is no pin and no scrub."}, {"text": "The morph plays in real time when a chapter becomes the active one, instead of being scrubbed by scroll distance", "passed": true, "evidence": "An IntersectionObserver with rootMargin '-50% 0px -50% 0px' (a midline) sets `target.morph = i + 1`. frame() integrates a critically damped spring (K=20) toward it with wall-clock dt, so scroll distance only selects the target. Simulated: 90% of a 0->1 morph in 0.88 s. Settling to within 1% of distance at zero velocity takes ~1.9 s, not the ~1.5 s claimed in notes.md. Most of the visible change happens in the first ~0.6 s because the spring is ease-out-heavy, but the morph does complete."}, {"text": "The planet's position between chapters follows the scroll continuously (scroll-linked), separately from the morph timing", "passed": false, "evidence": "Position is not scroll-linked. `target.x = X[i]` is set in the same IO callback as the morph, and `cur.x` is driven by the same time-based spring. While a user scrolls within or between chapters, the planet stays still. When the midline is crossed, it slides on its own timer. Position and morph share one trigger and one timing, the opposite of 'separately from the morph timing'. The original scrubbed x with scroll, so this is a behavior regression the user would feel as the planet lagging or being detached from the page."}, {"text": "Jumping several chapters via nav links fast-forwards through the skipped morphs (speed grows with the backlog) instead of playing each at normal speed or queueing", "passed": true, "evidence": "Passed on intent. The default anchor jump is instant, so the IO reports only the destination chapter and target.morph jumps directly (e.g. 1->4). A linear critically damped spring has distance-independent settle time and velocity proportional to the gap. Simulated: 90% of the way takes 0.88 s for both 0->1 and 1->4, passing through morphs 2 and 3 on the way. Nothing queues. Speed does grow with distance, though as a property of the spring rather than an explicit backlog rate. Caveat: the page itself teleports, because there is no smooth scroll, while the planet glides straight from X[0] to X[3] without visiting the intermediate x positions. That is acceptable, but less of a 'journey' than A."}, {"text": "Scrolling back up rewinds the morph to the end state of the chapter now on screen, at least as fast as forward", "passed": true, "evidence": "Scrolling up makes the previous chapter cross the midline, and the IO sets target.morph = i+1, the end state of the on-screen chapter. The spring is symmetric, so rewind is exactly as fast as forward, which satisfies 'at least as fast'. Reversal mid-morph keeps momentum. Simulated: reversing at morph 2.33 while heading to 3 carries on to 2.395 before returning to 2.0. This is a small but visible continuation in the wrong direction, so notes.md's 'stops exactly at the target with no overshoot' holds only when starting from rest."}, {"text": "prefers-reduced-motion is respected", "passed": true, "evidence": "story.js checks matchMedia live every frame. Under reduce it sets `cur[k] = target[k]; vel[k] = 0`, so morph and x snap. No smooth scrolling was added, so nothing else needs disabling."}], "summary": {"passed": 5, "failed": 1, "total": 6, "pass_rate": 0.83}, "claims": [{"claim": "0 to 1 settles within 1% in ~1.5s; 1 to 4 in ~1.75s", "type": "factual", "verified": false, "evidence": "My simulation of the same integrator (dt=1/60) gives ~1.9 s and ~2.2 s for 1% of distance plus near-zero velocity. Measured on position alone it is closer to the claim. This is a minor discrepancy."}, {"claim": "It stops exactly at the target with no overshoot", "type": "quality", "verified": false, "evidence": "The approach is asymptotic and never exactly reaches the target, though this is imperceptible. When the target changes mid-flight, the spring carries momentum past its current value, e.g. 2.33 -> 2.395 before returning to 2. Morph is clamped to [0,4], so it never leaves the valid range."}, {"claim": "Fixed setSize-every-frame and camera aspect on resize", "type": "factual", "verified": true, "evidence": "resize() handles setSize, aspect and updateProjectionMatrix. frame() no longer calls setSize."}, {"claim": "Opening #c3 directly plays the full dust to life sequence", "type": "factual", "verified": true, "evidence": "cur starts at morph 0, and the IO's initial callback sets the target to 4. The planet also slides in from x=0 because cur.x starts at 0, not at X[i]."}], "user_notes_summary": {"uncertainties": [], "needs_review": ["Only the spring was simulated; no browser run"], "workarounds": []}, "other_observations": ["dt is clamped to 1/30 s. On a device running below 30 fps, the spring runs slower than wall-clock time, so morphs take longer than tuned.", "On load, cur.x = 0 while X[0] = 2, so the planet slides from center to the right on every page load. Harmless, possibly even nice, but unintended.", "This is the smallest diff of the two (one file changed, no new files), and IntersectionObserver is a sensible native choice for picking the active chapter."], "eval_feedback": {"suggestions": [{"assertion": "Jumping several chapters via nav links fast-forwards through the skipped morphs (speed grows with the backlog)", "reason": "This submission meets the intent with a spring, whose settle time is distance-independent, rather than an explicit backlog-scaled rate. The parenthetical should describe the outcome, not the mechanism."}, {"reason": "No expectation tests continuity when the user reverses mid-morph. Here the spring overshoots briefly in the old direction, and an eval targeting 'no glitch when scrolling back up' should check for that."}, {"reason": "Expectation 3 is the most discriminating one. It is the only one separating 'scroll picks a target, everything animates on time' from a proper two-track design. Keep it."}], "overall": "The expectations are mostly solid. Expectation 4 is mechanism-flavored, and nothing covers mid-morph reversal behavior."}, "timing": {"executor_duration_seconds": 68.8, "total_duration_seconds": 68.8}}}, {"id": "eval-tea-leaf-build-with_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "index.html", "type": "text", "content": "<!doctype html>\n<html lang=\"en\">\n  <head>\n    <meta charset=\"utf-8\" />\n    <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n    <title>Oolong</title>\n    <style>\n      /* Only <html> gets a background: a body background would paint over the fixed canvas. */\n      html { background: #f4f1e8; color: #1f2a1a; font-family: Georgia, serif; }\n      body { margin: 0; }\n      #scene { position: fixed; inset: 0; z-index: -1; display: block; }\n      /* One screen per section, no sticky pinning: the playhead gives each section its moment. */\n      section { min-height: 100svh; box-sizing: border-box; padding: 2rem 1.25rem; display: grid; align-content: end; }\n      section > div { max-width: 34rem; }\n      h2 { font-size: clamp(2.5rem, 8vw, 5rem); margin: 0 0 0.5rem; }\n      /* Phones/tablets: copy in the lower half, the scene centred above it. */\n      section > div { min-height: 45svh; }\n      /* Same breakpoint as WIDE_QUERY in scene.ts: copy takes the half the leaf isn't in. */\n      @media (min-width: 1024px) {\n        section { grid-template-columns: 1fr 1fr; align-content: center; padding: 4rem 6vw; }\n        section > div { min-height: 0; }\n        section:nth-child(odd) > div { grid-column: 1; }  /* Pick, Roll: leaf on the right */\n        section:nth-child(even) > div { grid-column: 2; } /* Wither, Steep: leaf on the left */\n      }\n    </style>\n  </head>\n  <body>\n    <canvas id=\"scene\" aria-hidden=\"true\"></canvas>\n    <main>\n      <section id=\"pick\"><div><h2>Pick</h2><p>Two leaves and a bud, plucked by hand at first light.</p></div></section>\n      <section id=\"wither\"><div><h2>Wither</h2><p>Spread in the sun and shade until the leaf softens and its scent opens.</p></div></section>\n      <section id=\"roll\"><div><h2>Roll</h2><p>Rolled again and again until each leaf curls into a tight, dark pearl.</p></div></section>\n      <section id=\"steep\"><div><h2>Steep</h2><p>A pinch in the pot, water just off the boil, and the pearls unfurl.</p></div></section>\n    </main>\n    <script type=\"module\" src=\"./main.ts\"></script>\n  </body>\n</html>\n"}, {"name": "journey.test.ts", "type": "text", "content": "// Run: node journey.test.ts\nimport assert from \"node:assert/strict\";\nimport { scrollPosition, step } from \"./journey.ts\";\nimport { DROPS, fallT, waterLevel } from \"./timeline.ts\";\n\n/** Seconds to play from `from` to `to` at 60 fps. */\nfunction secs(from: number, to: number) {\n  let s = from;\n  let t = 0;\n  while (s !== to) {\n    const next = step(s, to, 1 / 60);\n    assert.ok(to > from ? next <= to : next >= to, \"never overshoots\");\n    s = next;\n    t += 1 / 60;\n  }\n  return t;\n}\n\nconst one = secs(1, 2);\nassert.ok(one > 1.5 && one < 1.7, `one section ~1.6 s (got ${one.toFixed(2)})`);\nconst jump = secs(0, 4);\nassert.ok(jump < 3, `top-to-bottom jump: skipped sections fly by, Steep still plays in full (got ${jump.toFixed(2)})`);\nconst back = secs(4, 3);\nassert.ok(back < one / 2, `rewinding one section is under half the forward time (got ${back.toFixed(2)})`);\nassert.equal(step(3.99, 4, 0.25), 4, \"big dt lands exactly on target\");\n\nconst vh = 800;\nconst rects = (y: number, last = vh) => [vh, vh, vh, last].map((h, i) => ({ top: i * vh - y, height: h }));\nassert.equal(scrollPosition(rects(0)), 0);\nassert.equal(scrollPosition(rects(vh * 1.5)), 1.5);\nassert.equal(scrollPosition(rects(vh * 3)), 3);\nassert.equal(scrollPosition(rects(vh * 3 + 600, 1400)), 3, \"tall last section clamps to 3\");\n\n// Steep: water rises only as leaves land, is full only after the last lands, all inside the section\nassert.equal(waterLevel(3.25), 0);\nassert.equal(fallT(3.9999, DROPS - 1), 1, \"last leaf lands before Steep ends\");\nassert.equal(waterLevel(3.9999), 1);\nlet prev = 0;\nfor (let s = 3; s <= 4; s += 0.01) {\n  const level = waterLevel(s);\n  const t = Array.from({ length: DROPS }, (_, i) => fallT(s, i));\n  const landed = t.filter((x) => x === 1).length;\n  const atPot = t.filter((x) => x >= 0.8).length; // in the last stretch of the fall, entering the pot\n  assert.ok(level >= prev, \"level never drops while playing forward\");\n  assert.ok(level >= landed / DROPS - 1e-9 && level <= atPot / DROPS + 1e-9, `no water from leaves still in the air at ${s.toFixed(2)}`);\n  prev = level;\n}\nconsole.log(`ok: section ${one.toFixed(2)}s, 0\u21924 jump ${jump.toFixed(2)}s, rewind ${back.toFixed(2)}s`);\n"}, {"name": "journey.ts", "type": "text", "content": "/**\n * Scroll state for the tea page (sections: Pick, Wither, Roll, Steep), read every frame by the scene.\n *\n * Two tracks, so the scene stays glued to the page in both scroll directions:\n * - `scroll` (page track) follows the page exactly: i when section i fills the screen, fractional\n *   in between. WHERE the leaf sits is driven by this, so scrolling up undoes it at page speed.\n * - `stage` (playhead) is a clock: stage i..i+1 is section i's own animation (wilting, rolling,\n *   steeping). Reaching a section plays it in real time, so each section is one screen tall instead\n *   of 2-3 screens of scrubbing. Skipped sections catch up fast; scrolling up rewinds fast.\n */\nexport const journey = { stage: 0, scroll: 0 };\n\nconst SECONDS_PER_SECTION = 1.6;\nconst CATCH_UP = 3; // extra speed per section of backlog beyond the current one\nconst REWIND = 2.5; // going back up undoes a section faster than it played\n\nexport const clamp01 = (n: number) => Math.min(1, Math.max(0, n));\nexport const smoothstep = (a: number, b: number, n: number) => {\n  const t = clamp01((n - a) / (b - a));\n  return t * t * (3 - 2 * t);\n};\n\n/** Speed of the playhead, in sections per second, for a given distance to the target. */\nexport const playRate = (gap: number) =>\n  ((gap < 0 ? REWIND : 1) * (1 + CATCH_UP * Math.max(0, Math.abs(gap) - 1))) / SECONDS_PER_SECTION;\n\n/** Advances `stage` toward `target` by `dt` seconds of wall-clock time, never overshooting. */\nexport function step(stage: number, target: number, dt: number) {\n  const gap = target - stage;\n  return stage + Math.sign(gap) * Math.min(Math.abs(gap), playRate(gap) * dt);\n}\n\n/** Page position in sections: i when section i's top is at the top of the screen. */\nexport function scrollPosition(rects: { top: number; height: number }[]) {\n  let pos = 0;\n  rects.forEach((r, i) => {\n    if (r.top <= 0) pos = i + clamp01(-r.top / r.height);\n  });\n  return Math.min(pos, rects.length - 1);\n}\n\n/** Watches the sections and drives both tracks. Returns a cleanup function. */\nexport function trackJourney(sections: HTMLElement[], reducedMotion: boolean) {\n  const root = document.documentElement;\n  let target = 0;\n  let raf = 0;\n  let last = 0;\n\n  const settle = () => {\n    raf = 0;\n    root.dataset.journey = \"idle\";\n    root.dataset.playhead = journey.stage.toFixed(2);\n  };\n  const tick = (now: number) => {\n    // wall-clock dt so slow devices finish on schedule; capped so a background tab doesn't jump\n    journey.stage = step(journey.stage, target, Math.min(0.25, (now - last) / 1000));\n    last = now;\n    if (journey.stage === target) settle();\n    else raf = requestAnimationFrame(tick);\n  };\n\n  const update = () => {\n    const rects = sections.map((el) => el.getBoundingClientRect());\n    journey.scroll = scrollPosition(rects);\n\n    // the section covering the middle of the screen owns the playhead\n    const mid = window.innerHeight / 2;\n    let active = 0;\n    rects.forEach((r, i) => {\n      if (r.top <= mid) active = i;\n    });\n    target = active + 1;\n\n    if (journey.stage === target || raf) return;\n    if (reducedMotion) {\n      journey.stage = target;\n      settle();\n      return;\n    }\n    root.dataset.journey = \"running\";\n    last = performance.now();\n    raf = requestAnimationFrame(tick);\n  };\n\n  update();\n  window.addEventListener(\"scroll\", update, { passive: true });\n  window.addEventListener(\"resize\", update);\n  return () => {\n    window.removeEventListener(\"scroll\", update);\n    window.removeEventListener(\"resize\", update);\n    cancelAnimationFrame(raf);\n    journey.stage = 0;\n    journey.scroll = 0;\n    delete root.dataset.journey;\n    delete root.dataset.playhead;\n  };\n}\n"}, {"name": "main.ts", "type": "text", "content": "import { trackJourney } from \"./journey.ts\";\nimport { createScene } from \"./scene.ts\";\n\nconst reducedMotion = matchMedia(\"(prefers-reduced-motion: reduce)\").matches;\ntrackJourney([...document.querySelectorAll<HTMLElement>(\"main > section\")], reducedMotion);\ncreateScene(document.querySelector<HTMLCanvasElement>(\"#scene\")!, reducedMotion);\n"}, {"name": "notes.md", "type": "text", "content": "# Oolong scroll scene: what I built and how it behaves\n\n## Files\n\n| File | What it does |\n| --- | --- |\n| `journey.ts` | Scroll/animation controller: page position, playhead, rAF loop, `data-journey` / `data-playhead` on `<html>` |\n| `timeline.ts` | When each effect happens, as pure functions of the playhead (arrive, wilt, curl, pot, falls, water level) |\n| `scene.ts` | Three.js scene and per-frame update. The meshes are stubs: a deformable plane leaf, sphere \"pearls\", and a cylinder glass teapot with water |\n| `main.ts` | Wires the two together |\n| `index.html` | Four one-screen sections, a fixed canvas, and CSS that puts the copy on the opposite side to the leaf |\n| `journey.test.ts` | `node journey.test.ts`: checks timing, no overshoot, scroll position, and that the water follows the leaves |\n\nIt runs with Vite (`npm i three`, then `npx vite`). The imports use `.ts` extensions so Node can run the test directly. If you type-check with `tsc`, turn on `allowImportingTsExtensions` and `noEmit`.\n\n## How it behaves\n\n**You scroll one screen per section.** The sections are 100svh with no sticky pinning and no long scroll runways. Each section's effect is not scrubbed by the scroll. It plays on its own once the section covers the middle of the screen, and takes about 1.6 s.\n\nThe animation runs on two tracks.\n\n- **Where the leaf is follows the page exactly.** As the next section scrolls in, the leaf glides to its next spot: right in Pick, left in Wither, right in Roll, left in Steep. While a section fills the screen, the leaf stays put. On wide screens (\u22651024 px, the same media query as the CSS) it sits in the centre of the half the copy doesn't use, measured from the visible width, so it holds at 1024, 1366 and 1920 px. On narrower screens the leaf is centred in the upper part and the copy sits in the lower half. Scrolling back up moves the leaf back at the speed the page moves, with no lag.\n- **What the leaf is doing follows a playhead.** Section *i* owns playhead range `i..i+1`:\n  - **Pick (0\u20131):** the leaf drifts down into place and turns upright. This plays on page load.\n  - **Wither (1\u20132):** the tip sags, the edges cup backwards, the blade narrows a little, and the colour goes from fresh green to dull olive.\n  - **Roll (2\u20133):** the blade wraps into a ball. Its length runs pole to pole and its width wraps round behind. The colour goes to dark oolong green.\n  - **Steep (3\u20134):** the glass teapot rises in under the ball and five more pearls appear around it. Then all six drop in, one after another, with the hero leaf first. They fall with gravity-style acceleration and tumble on the way down. The last one lands at 3.75, well before the section ends.\n  - **The water is derived from the leaves.** It has no timer of its own: the level is the share of leaves that have reached the pot. Each leaf adds its share only during the last 20% of its fall, so the water rises as the leaves land and never runs ahead of them. It also turns from clear to amber as it fills. If you retune the fall timing, the water follows automatically.\n\n**Scrolling fast or jumping:**\n- If you skip ahead (anchor link, End key, or a fast fling), the skipped sections fast-forward. The test measures top to bottom at about 2.8 s: roughly 1.2 s for Pick, Wither and Roll combined, then a full 1.6 s for Steep so the pour still reads.\n- Scrolling back up rewinds 2.5\u00d7 faster than forward. Undoing Steep (leaves fly back up, water drains, pot sinks away) takes about 0.65 s. That finishes while Roll is still sliding in, so you never watch a long reverse replay.\n- Everything is a pure function of playhead and page position, so any back-and-forth sequence always lands in the right state.\n\n**Reduced motion:** the playhead jumps straight to each section's end state, the page position isn't smoothed, and the idle sway is off.\n\n## Things you'll want to tune\n\n- `SECONDS_PER_SECTION` (1.6), `CATCH_UP` (3) and `REWIND` (2.5) are at the top of `journey.ts`.\n- The `WIDE` / `NARROW` resting spots and the teapot offset `POT_Y` are in `scene.ts`.\n- Effect ranges are in `timeline.ts`. Keep each effect inside its own `[i, i+1]` range and leave the first ~5% quiet.\n- To use real meshes: give the leaf two morph targets (wilted, rolled) and set `morphTargetInfluences = [wilt, curl]` in place of `leaf.deform(...)`. Swap the pearls and the pot one-for-one. Nothing else changes.\n\n## Checks done and not done\n\n- **Done:** `node journey.test.ts` passes. One section takes 1.60 s, the 0\u21924 jump takes 2.82 s, a rewind takes 0.65 s, the playhead never overshoots, `scrollPosition` is right at the start, middle and end and with a tall last section, and water only rises for leaves that have reached the pot. All files type-check under `tsc --strict` against three r186.\n- **Not done:** I couldn't open a browser, so I haven't looked at any frames. Before shipping, check each section at 390, 768, 1366 and 1920 px to confirm the leaf and pot never overlap the copy. The Steep layout on short phones (under about 640 px tall) is the most likely spot to need a tweak to `NARROW`. Also scroll from Roll to Steep and back and watch it. `<html data-journey=\"idle\" data-playhead=\"4.00\">` is there for E2E waits. When you scroll from a test, dispatch a `scroll` event right after `scrollTo`.\n"}, {"name": "scene.ts", "type": "text", "content": "import * as THREE from \"three\";\nimport { journey, smoothstep } from \"./journey.ts\";\nimport { arrive, curl, DROPS, fallT, potIn, waterLevel, wilt } from \"./timeline.ts\";\n\n// Same breakpoint as the CSS media query, so two-column copy and the side-by-side scene switch together.\nconst WIDE_QUERY = \"(min-width: 1024px)\";\n\n// Where the anchor rests during each section: Pick, Wither, Roll, Steep.\n// Wide: [side, y, scale]; side -1/+1 = centre of the left/right half of the view (the copy takes the\n// other half). Steep sits higher because the teapot hangs below the anchor.\nconst WIDE: [number, number, number][] = [[1, 0.1, 1], [-1, 0, 1], [1, 0, 1], [-1, 0.75, 0.95]];\n// Narrow: centred, above the copy (the copy sits in the lower half of each section on phones).\nconst NARROW: [number, number, number][] = [[0, 1.3, 0.6], [0, 1.3, 0.6], [0, 1.3, 0.6], [0, 1.6, 0.55]];\n\nconst LEAF_L = 1.6;\nconst LEAF_W = 0.7;\nconst BALL_R = 0.22;\nconst POT_R = 0.75;\nconst POT_H = 1.1;\nconst POT_Y = -1.75; // pot base, below the anchor (anchor units)\n\nconst FRESH = new THREE.Color(\"#5c9b3c\");\nconst WILTED = new THREE.Color(\"#8c8a48\");\nconst ROLLED = new THREE.Color(\"#3f5326\");\nconst CLEAR = new THREE.Color(\"#d6ecf2\");\nconst AMBER = new THREE.Color(\"#c98a2b\");\n\n// Steep: where each curled leaf waits (around the anchor) and where it lands (from the pot base).\n// Index 0 is the hero leaf. Fixed values so every visit looks the same.\nconst START: [number, number, number][] = [[0, 0, 0], [-0.55, 0.15, 0.1], [0.55, 0.2, -0.1], [-0.3, 0.45, -0.15], [0.3, 0.5, 0.15], [0, 0.65, -0.2]];\nconst END: [number, number, number][] = [[0, 0.24, 0.1], [-0.4, 0.24, -0.1], [0.4, 0.24, 0], [-0.15, 0.24, -0.4], [0.2, 0.25, 0.38], [0.05, 0.62, -0.05]];\n\n/** Anchor for page position p (in sections): glides from frame i to i+1 while section i+1 scrolls in. */\nfunction along(frames: [number, number, number][], p: number) {\n  const i = Math.max(0, Math.min(Math.floor(p), frames.length - 2));\n  const t = smoothstep(0.1, 0.9, p - i);\n  const a = frames[i];\n  const b = frames[i + 1];\n  return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t] as const;\n}\n\n/** Flat leaf in the XY plane (stalk at -x), deformed per frame: wilt droops it, curl wraps it into a ball. */\nfunction makeLeaf() {\n  const geometry = new THREE.PlaneGeometry(LEAF_L, LEAF_W, 32, 10);\n  const pos = geometry.attributes.position as THREE.BufferAttribute;\n  const U = new Float32Array(pos.count); // 0 at the stalk .. 1 at the tip\n  const V = new Float32Array(pos.count); // -1 .. 1 across the blade\n  for (let i = 0; i < pos.count; i++) {\n    U[i] = pos.getX(i) / LEAF_L + 0.5;\n    V[i] = pos.getY(i) / (LEAF_W / 2);\n  }\n  let last = [-1, -1];\n  const deform = (w: number, c: number) => {\n    if (w === last[0] && c === last[1]) return;\n    last = [w, c];\n    for (let i = 0; i < pos.count; i++) {\n      const u = U[i];\n      const v = V[i];\n      // flat blade with a slight midrib fold, then wilting: tip sags, edges cup backwards, blade narrows\n      const half = (LEAF_W / 2) * Math.sin(Math.PI * u) ** 0.7 * (1 - 0.15 * w);\n      const x = (u - 0.5) * LEAF_L;\n      const y = v * half - w * 0.55 * u * u;\n      const z = 0.05 * (1 - Math.abs(v)) - w * 0.3 * v * v * u;\n      // ball: length runs pole to pole, width wraps around behind, front face stays outward\n      const th = u * Math.PI;\n      const ph = v * Math.PI;\n      const bx = -BALL_R * Math.cos(th);\n      const by = BALL_R * Math.sin(th) * Math.sin(ph);\n      const bz = BALL_R * Math.sin(th) * Math.cos(ph);\n      pos.setXYZ(i, x + (bx - x) * c, y + (by - y) * c, z + (bz - z) * c);\n    }\n    pos.needsUpdate = true;\n    geometry.computeVertexNormals();\n  };\n  return { geometry, deform };\n}\n\nfunction makePot() {\n  const pot = new THREE.Group();\n  const glass = new THREE.MeshPhysicalMaterial({\n    color: \"#eaf6f8\",\n    roughness: 0.05,\n    transparent: true,\n    opacity: 0.22,\n    side: THREE.DoubleSide,\n    depthWrite: false,\n  });\n  const body = new THREE.Mesh(new THREE.CylinderGeometry(POT_R, POT_R, POT_H, 40, 1, true), glass);\n  body.position.y = POT_H / 2;\n  const floor = new THREE.Mesh(new THREE.CircleGeometry(POT_R, 40), glass);\n  floor.rotation.x = -Math.PI / 2;\n  const spout = new THREE.Mesh(new THREE.CylinderGeometry(0.05, 0.1, 0.6, 16, 1, true), glass);\n  spout.position.set(POT_R + 0.2, POT_H * 0.55, 0);\n  spout.rotation.z = -0.9;\n  const handle = new THREE.Mesh(new THREE.TorusGeometry(0.3, 0.04, 8, 24, Math.PI), glass);\n  handle.position.set(-POT_R, POT_H * 0.55, 0);\n  handle.rotation.z = Math.PI / 2;\n  for (const m of [body, floor, spout, handle]) m.renderOrder = 2; // glass after the water\n  pot.add(body, floor, spout, handle);\n\n  const waterMat = new THREE.MeshStandardMaterial({ color: CLEAR, roughness: 0.1, transparent: true, opacity: 0.3, depthWrite: false });\n  const water = new THREE.Mesh(new THREE.CylinderGeometry(POT_R * 0.96, POT_R * 0.96, 1, 40).translate(0, 0.5, 0), waterMat);\n  water.renderOrder = 1;\n  pot.add(water);\n  return { pot, water, waterMat };\n}\n\n/** Builds the scene on a fixed, full-screen canvas and runs its render loop. Returns a cleanup function. */\nexport function createScene(canvas: HTMLCanvasElement, reducedMotion: boolean) {\n  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });\n  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));\n  const scene = new THREE.Scene();\n  const camera = new THREE.PerspectiveCamera(35, 1, 0.1, 50);\n  camera.position.z = 8;\n  scene.add(new THREE.HemisphereLight(\"#fffbe8\", \"#5b6b4a\", 1.6));\n  const sun = new THREE.DirectionalLight(\"#ffffff\", 2);\n  sun.position.set(3, 4, 5);\n  scene.add(sun);\n\n  // Stubs: swap for real meshes. A real leaf would use morph targets (influences = wilt, curl).\n  const leaf = makeLeaf();\n  const leafMat = new THREE.MeshStandardMaterial({ color: FRESH, roughness: 0.6, side: THREE.DoubleSide });\n  const hero = new THREE.Mesh(leaf.geometry, leafMat);\n  const ballGeo = new THREE.SphereGeometry(BALL_R, 20, 14);\n  const ballMat = new THREE.MeshStandardMaterial({ color: ROLLED, roughness: 0.6 });\n  const leaves: THREE.Object3D[] = [hero];\n  for (let i = 1; i < DROPS; i++) {\n    const ball = new THREE.Mesh(ballGeo, ballMat);\n    ball.rotation.set(i * 1.3, i * 0.7, 0);\n    leaves.push(ball);\n  }\n  const { pot, water, waterMat } = makePot();\n  scene.add(pot, ...leaves);\n\n  const wideQuery = matchMedia(WIDE_QUERY);\n  let halfW = 1;\n  const resize = () => {\n    renderer.setSize(innerWidth, innerHeight);\n    camera.aspect = innerWidth / innerHeight;\n    camera.updateProjectionMatrix();\n    // visible half-width at z = 0, so \"centre of the left/right half\" holds at any aspect ratio\n    halfW = Math.tan(THREE.MathUtils.degToRad(camera.fov / 2)) * camera.position.z * camera.aspect;\n  };\n  resize();\n  addEventListener(\"resize\", resize);\n\n  let page = journey.scroll; // smoothed page position\n  let lastNow = 0;\n  const v = new THREE.Vector3();\n  const anchor = new THREE.Vector3();\n  const potBase = new THREE.Vector3();\n\n  renderer.setAnimationLoop((now: number) => {\n    const dt = lastNow ? Math.min(0.25, (now - lastNow) / 1000) : 0;\n    lastNow = now;\n    const time = reducedMotion ? 0 : now / 1000;\n    const s = journey.stage;\n\n    // PAGE TRACK: where things are. Damping only irons out mouse-wheel steps.\n    page = reducedMotion ? journey.scroll : THREE.MathUtils.damp(page, journey.scroll, 14, dt);\n    const wide = wideQuery.matches;\n    const [side, ay, as] = along(wide ? WIDE : NARROW, page);\n    anchor.set(wide ? side * halfW * 0.5 : 0, ay, 0); // one anchor for the whole journey\n    potBase.set(anchor.x, anchor.y + POT_Y * as, 0);\n\n    // PLAYHEAD: what happens. Everything below is a pure function of `s`, so rewinding is free.\n    const a = reducedMotion ? 1 : arrive(s);\n    const w = wilt(s);\n    const c = curl(s);\n    const shown = potIn(s);\n\n    leaf.deform(w, c);\n    leafMat.color.copy(FRESH).lerp(WILTED, w).lerp(ROLLED, c);\n\n    pot.position.copy(potBase);\n    pot.position.y -= (1 - shown) * 0.4 * as; // rises into place\n    pot.scale.setScalar(as * shown + 1e-4);\n    pot.visible = shown > 0.001;\n\n    for (let i = 0; i < DROPS; i++) {\n      const t = fallT(s, i);\n      const st = START[i];\n      const en = END[i];\n      // x/z glide linearly, y accelerates like a drop\n      const from = v.set(anchor.x + st[0] * as, anchor.y + st[1] * as, st[2] * as);\n      const leafObj = leaves[i];\n      leafObj.position.set(\n        from.x + (potBase.x + en[0] * as - from.x) * t,\n        from.y + (potBase.y + en[1] * as - from.y) * t * t,\n        from.z + (en[2] * as - from.z) * t,\n      );\n      if (i > 0) {\n        const k = as * shown + 1e-4;\n        leafObj.scale.set(k, k * 0.85, k * 0.95); // rolled leaves aren't perfect spheres\n        leafObj.visible = shown > 0.001;\n        leafObj.rotation.x = i * 1.3 + t * 2.5; // tumble on the way down\n      }\n    }\n\n    // hero: drifts in during Pick, sags as it wilts, gentle sway until it's a ball, tumbles when dropped\n    hero.position.y += (1 - a) * 0.8 * as;\n    hero.scale.setScalar(as * a + 1e-4);\n    hero.rotation.set(fallT(s, 0) * 2.5, Math.sin(time * 0.6) * 0.3 * (1 - c), 0.5 - 0.45 * w + (1 - a) * 1.2);\n\n    // water follows the leaves (see waterLevel): rises as they land, browns as it fills\n    const level = waterLevel(s);\n    water.visible = level > 0.005;\n    water.scale.y = Math.max(1e-4, level * 0.85 * POT_H);\n    const brew = smoothstep(0.3, 1, level);\n    waterMat.color.copy(CLEAR).lerp(AMBER, brew);\n    waterMat.opacity = 0.3 + 0.3 * brew;\n\n    renderer.render(scene, camera);\n  });\n\n  return () => {\n    renderer.setAnimationLoop(null);\n    removeEventListener(\"resize\", resize);\n    renderer.dispose();\n  };\n}\n"}, {"name": "timeline.ts", "type": "text", "content": "import { clamp01, smoothstep } from \"./journey.ts\";\n\n/**\n * What happens when, as pure functions of the playhead `stage`. Section i owns stage i..i+1:\n * Pick 0..1, Wither 1..2, Roll 2..3, Steep 3..4. Pure functions run backwards with no extra code.\n * Each effect leaves the first ~5% of its section quiet and finishes before the section ends.\n */\n\nexport const arrive = (s: number) => smoothstep(0.05, 0.8, s); // Pick: leaf drifts in\nexport const wilt = (s: number) => smoothstep(1.05, 1.85, s); // Wither: droops, dulls\nexport const curl = (s: number) => smoothstep(2.05, 2.85, s); // Roll: curls into a ball\nexport const potIn = (s: number) => smoothstep(3.05, 3.2, s); // Steep: teapot + extra leaves appear\n\n/** Leaves dropped into the pot in Steep. Index 0 is the hero leaf. */\nexport const DROPS = 6;\nconst STAGGER = 0.15; // total spread of start times, so the last one still lands inside Steep\nconst FALL = 0.35; // length of one fall, in sections\n\n/** Linear 0..1 fall progress of leaf i (the scene eases it). Last leaf lands at 3.25 + 0.15 + 0.35 = 3.75. */\nexport const fallT = (s: number, i: number) => clamp01((s - 3.25 - (i / (DROPS - 1)) * STAGGER) / FALL);\n\n/**\n * Water level 0..1. Derived from the leaves, not from its own timer: each leaf adds its share during\n * the last 20% of its fall (as it enters the pot), so the level rises exactly as they land and drains\n * when the section is rewound.\n */\nexport function waterLevel(s: number) {\n  let landed = 0;\n  for (let i = 0; i < DROPS; i++) landed += smoothstep(0.8, 1, fallT(s, i));\n  return landed / DROPS;\n}\n"}], "grading": {"expectations": [{"text": "The leaf's position between sections is computed from a continuous scroll position (how far the page has scrolled through the sections), not from the time-based playhead", "passed": true, "evidence": "journey.ts scrollPosition(rects): pos = i + clamp01(-r.top / r.height) for the last section whose top is above the viewport top, giving a continuous section index stored in journey.scroll on every scroll and resize. scene.ts: page = damp(page, journey.scroll, 14, dt), and anchor = along(WIDE|NARROW, page) sets where the leaf, the pot and the drop start points sit. journey.stage (the playhead) only drives arrive, wilt, curl, potIn and fallT, not the anchor."}, {"text": "Per-section effects (wilt, curl, pour) play on a time-based playhead whose target is set by the section currently on screen, so a section does not need extra scroll distance to play", "passed": true, "evidence": "journey.ts update(): active = the last section with r.top <= innerHeight/2, and target = active + 1. tick() advances journey.stage by wall-clock dt through step(). timeline.ts maps stage 1..2 to wilt, 2..3 to curl, and 3..4 to pot, drops and water. Sections are 100svh with no pinning (index.html). Once a section passes mid-screen, its effect plays in about 1.6 s with no further scrolling (test: 'section 1.60s')."}, {"text": "The playhead moves faster when it is more than one section behind its target (catch-up), rather than playing skipped sections at normal speed", "passed": true, "evidence": "journey.ts playRate(gap) = (gap<0 ? REWIND : 1) * (1 + CATCH_UP * max(0, |gap| - 1)) / SECONDS_PER_SECTION with CATCH_UP = 3. Speed scales with the backlog beyond one section. I ran the test: a 0\u21924 jump takes 2.82 s, compared with 6.4 s at normal speed."}, {"text": "Scrolling back up is handled: effects are pure functions of the playhead (so they reverse) and the rewind is at least as fast as playing forward", "passed": true, "evidence": "timeline.ts arrive, wilt, curl, potIn, fallT and waterLevel are all pure smoothstep or clamp functions of s. scene.ts recomputes everything from s each frame (leaf.deform(w, c) rebuilds the vertices from w and c, not incrementally). playRate applies REWIND = 2.5 for negative gaps. The test asserts back < one/2, and the measured rewind of one section is 0.65 s against 1.60 s forward."}, {"text": "The teapot water level is derived from the leaves' landing progress (e.g. share of leaves landed), not from an independent timer or threshold", "passed": true, "evidence": "timeline.ts waterLevel(s) = sum over leaves of smoothstep(0.8, 1, fallT(s, i)) / DROPS. It is computed directly from each leaf's fall progress (the last 20% of each fall). journey.test.ts sweeps s from 3 to 4 and asserts landed/DROPS <= level <= atPot/DROPS, plus a monotonic level. Strictly, a leaf adds water during its last 20% of fall, slightly before touchdown, which the author states openly."}, {"text": "The playhead advances by real elapsed time with a generous cap (\u2265 ~0.1 s), not a tiny per-frame cap that makes slow devices run in slow motion", "passed": true, "evidence": "journey.ts tick: journey.stage = step(stage, target, Math.min(0.25, (now - last) / 1000)). Real dt with a 0.25 s cap. The test asserts step(3.99, 4, 0.25) === 4."}, {"text": "prefers-reduced-motion is respected (effects jump to their end state or motion is reduced)", "passed": true, "evidence": "journey.ts update(): if (reducedMotion) { journey.stage = target; settle(); }, so the effects jump to the section's end state. scene.ts forces a = 1 (no drift-in) and time = 0 (no sway) and skips the page damping. Limitation: main.ts reads matchMedia(...).matches once at load, so a change while the page is open is not picked up."}, {"text": "Provides a way to verify the timing logic: unit tests for the pure step/position functions and/or exposed playhead state for end-to-end tests", "passed": true, "evidence": "Both are provided. journey.test.ts (I ran it: 'ok: section 1.60s, 0\u21924 jump 2.82s, rewind 0.65s', exit 0) tests step timing, no overshoot, large-dt landing, scrollPosition (including a tall last section) and the coupling of water to leaves. trackJourney writes <html data-journey='running|idle' data-playhead='N.NN'> for end-to-end waits."}], "summary": {"passed": 8, "failed": 0, "total": 8, "pass_rate": 1.0}, "claims": [{"claim": "node journey.test.ts passes: one section 1.60 s, 0\u21924 jump 2.82 s, rewind 0.65 s", "type": "factual", "verified": true, "evidence": "Ran under Node v22.22.3, and the output matches exactly."}, {"claim": "All files type-check under tsc --strict against three r186", "type": "process", "verified": false, "evidence": "Can't be verified: there is no node_modules or transcript, and installing was not allowed."}, {"claim": "Rewinding Steep finishes while Roll is still sliding in", "type": "quality", "verified": false, "evidence": "Only partly true. The target drops to 3 only when Steep's top moves back below mid-screen, i.e. halfway through the reverse transition. Then 0.65 s of rewind starts while the page anchor is already gliding toward Roll's spot, so it depends on scroll speed. For a slow scroll it holds; for a fast fling the leaves are still flying back up after the anchor has settled."}, {"claim": "Everything is a pure function of playhead and page position", "type": "quality", "verified": true, "evidence": "scene.ts sets every transform, scale, colour and the water level from s and page each frame. Its only internal state is the damped page value and a deform memo keyed on (w, c)."}], "user_notes_summary": {"uncertainties": ["No frames viewed in a browser", "Steep layout on short phones (<640px tall) may need NARROW tweaks"], "needs_review": ["Check 390/768/1366/1920 px for leaf/copy overlap", "E2E tests must dispatch a scroll event after scrollTo"], "workarounds": []}, "eval_feedback": {"suggestions": [{"reason": "Minor bug not covered by any assertion. In journey.ts update(), last = performance.now() is taken inside a scroll handler and then requestAnimationFrame(tick) is called. Browsers dispatch scroll events in the same rendering step, before rAF callbacks, so the first tick can get a timestamp earlier than last. The result is a small negative dt, and the first step nudges stage a few thousandths away from the target. It is harmless because the effects clamp, but the fix is simply last = 0 with dt = 0 on the first tick."}, {"reason": "Minor: main.ts reads prefers-reduced-motion once at load (.matches), so toggling the OS setting needs a reload. Also, scrollPosition assumes the last section's top can reach 0. On mobile, where 100svh is less than innerHeight once the URL bar hides, pos stops at about 2.9x, which along()'s 0.9 smoothstep edge happens to cover. No assertion probes either issue."}, {"reason": "No assertion checks the first-visit experience: B plays Pick (stage 0\u21921) on page load and, after a mid-page reload or anchor link, fast-forwards the whole story (about 2.8 s) with the leaf already at the destination. That is defensible, but worth an explicit expectation."}], "overall": "B meets every expectation, with substance and running tests. The assertions closely match B's architecture, so a 100% score partly reflects that alignment. Still, the mechanisms are real and the tests verify the numbers the notes claim."}, "timing": {"executor_duration_seconds": 322.8, "total_duration_seconds": 322.8}}}, {"id": "eval-tea-leaf-build-without_skill-run-1", "prompt": "(No prompt found)", "eval_id": null, "outputs": [{"name": "index.html", "type": "text", "content": "<!doctype html>\n<html lang=\"en\">\n<head>\n  <meta charset=\"utf-8\" />\n  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1\" />\n  <title>Oolong</title>\n  <style>\n    body { margin: 0; background: #f4efe4; color: #23301a; font-family: Georgia, serif; }\n    #scene { position: fixed; inset: 0; width: 100%; height: 100%; pointer-events: none; z-index: 0; }\n    main { position: relative; z-index: 1; }\n    section { min-height: 100vh; display: flex; align-items: center; padding: 0 6vw; box-sizing: border-box; }\n    section.text-right { justify-content: flex-end; }\n    .copy { max-width: 26rem; }\n    h2 { font-size: clamp(2.5rem, 7vw, 5rem); margin: 0 0 .5rem; }\n    @media (max-aspect-ratio: 4/5) {\n      section { align-items: flex-start; padding-top: 12vh; }\n      section.text-right { justify-content: flex-start; }\n    }\n  </style>\n</head>\n<body>\n  <canvas id=\"scene\" aria-hidden=\"true\"></canvas>\n  <main>\n    <section data-step class=\"text-left\"><div class=\"copy\"><h2>Pick</h2><p>Two leaves and a bud, picked at first light.</p></div></section>\n    <section data-step class=\"text-right\"><div class=\"copy\"><h2>Wither</h2><p>Laid out in the sun and shade until they soften.</p></div></section>\n    <section data-step class=\"text-left\"><div class=\"copy\"><h2>Roll</h2><p>Bruised and rolled by hand into tight pearls.</p></div></section>\n    <section data-step class=\"text-right\"><div class=\"copy\"><h2>Steep</h2><p>Drop a few into hot water and watch them open.</p></div></section>\n  </main>\n  <script type=\"module\" src=\"./src/main.ts\"></script>\n</body>\n</html>\n"}, {"name": "notes.md", "type": "text", "content": "# Oolong scroll scene: what I built and how it behaves\n\n## Files\n- `index.html`: four `100vh` sections (`data-step`) with text alternating left and right, and a fixed `<canvas id=\"scene\">` behind them.\n- `src/timeline.ts`: pure logic, with no three and no DOM. It maps scroll to progress and progress to scene state.\n- `src/scene.ts`: Three.js setup, the stub meshes, and `update(t, time)`, which applies the state.\n- `src/main.ts`: the scroll controller (measures sections, reads scroll once per frame, eases, calls the scene).\n- `src/check.ts`: self-check. Run `node src/check.ts` and it prints `timeline ok`. It passes.\n\nImports use `.ts` extensions so Node can run the check. With Vite or tsc, set `\"allowImportingTsExtensions\": true` (with `noEmit`, or let the bundler handle it). `three` is the only dependency.\n\n## How it's driven\nEverything comes from one number, `t`, which is a continuous section index:\n`0` = Pick fills the screen, `1` = Wither, `2` = Roll, `3` = Steep.\n\n- **Scroll to `t`.** On load, on resize and when the body reflows (ResizeObserver, which catches font and image loads), I record each section's \"settled\" scroll position. That is its top, capped at the maximum scroll so a footer or a short last section can't leave Steep unfinished. During a frame, `scrollY` is mapped piecewise-linearly between those anchors. No layout is read per frame and no pixel heights are hard-coded.\n- **`t` to the scene.** `computeState(t)` is a pure function. Scrolling back up plays everything in reverse exactly, and reloading halfway down the page shows the correct frame straight away (the first frame snaps instead of easing).\n- **Easing.** Only `t` is eased: an exponential follow at `FOLLOW = 10` takes about 0.3 s to settle. Leaf, teapot and water are all derived from the same eased `t`, so they never drift relative to each other. They can only trail the scrollbar slightly. Raise `FOLLOW` for a tighter feel and lower it for a floatier one. With `prefers-reduced-motion`, there is no easing and no idle sway.\n\n## Scroll cost\nEach section is one viewport tall. There are no pinned sections and no 300vh spacers, so the whole story takes **3 screen-heights of scrolling**. Each transition plays while its section scrolls in and is finished just before that section fills the screen. The text and the animation arrive together.\n\n## What happens, section by section\n| Scroll | Leaf | Other |\n|---|---|---|\n| Pick (t=0) | Fresh green flat leaf on the **right** (text left), gently swaying | \u2013 |\n| Pick \u2192 Wither | Arcs across to the **left**; wilts in the middle 60% of the scroll (tips droop, edges pull in, colour goes olive) | \u2013 |\n| Wither \u2192 Roll | Arcs back to the **right**; curls from wilted into a tight dark ball | \u2013 |\n| Roll \u2192 Steep, first 30% | Ball travels to the **left** and rises above the spot where the pot appears | Glass teapot fades in; 4 more rolled leaves scale in above it |\n| Steep, 30\u201395% | The 5 leaves drop one after another (gravity ease) and stack on the pot floor | Water rises **after each landing**, one fifth of the fill per leaf, up to 75% of the pot |\n\nThe water level is calculated from the same per-leaf drop progress, so it is impossible for it to rise before a leaf lands. The check asserts this across the whole scroll range, along with the absence of position jumps at section seams.\n\nThe leaf stub is a flattened sphere with two morph targets (`[wilted, rolled]`). The influences hand over from one to the other instead of adding up. A real GLB leaf with the same two morph targets in that order can replace it without changing any of the timeline code. The teapot is an open glass cylinder plus a torus handle. The water is a cylinder scaled up from the floor.\n\n## Responsive\n\"Side\" is a fraction of the visible width (24%), recomputed on resize, so the leaf stays beside the text at any aspect ratio. On portrait screens (aspect < 0.8), the scene is centred and moved down, and the text moves to the top.\n\n## Not done\n- **No scroll-snap.** If you want each section to settle cleanly, add `html { scroll-snap-type: y proximity }` and `section { scroll-snap-align: start }`. Avoid `mandatory`, because it fights trackpads.\n- **No render-on-idle.** The loop renders every frame, partly because of the idle sway. If battery life matters, skip `render` when `t` hasn't changed and the leaf is in the pot.\n- **Leaves don't float.** They sit on the pot floor as the water rises. Add buoyancy in `computeState` if you want them to bob up.\n- **Not run in a browser.** Only the pure timeline was executed. `scene.ts` and `main.ts` were checked for syntax but have not been run against three.\n"}], "grading": {"expectations": [{"text": "The leaf's position between sections is computed from a continuous scroll position (how far the page has scrolled through the sections), not from the time-based playhead", "passed": true, "evidence": "src/main.ts: target = progressFromScroll(scrollY, anchors), a piecewise-linear continuous section index built from the measured section tops (timeline.ts anchorsFrom/progressFromScroll). computeState(t) puts the hero leaf at lerp(SIDE[seg], SIDE[seg+1], u) where u comes from that t. There is no time-based playhead at all, so the position cannot come from one."}, {"text": "Per-section effects (wilt, curl, pour) play on a time-based playhead whose target is set by the section currently on screen, so a section does not need extra scroll distance to play", "passed": false, "evidence": "There is no playhead. wilt = smooth(remap(t, 0.25, 0.85)), curl = remap(t, 1.25, 1.85), and the drops and fill are all functions of the eased scroll index t (timeline.ts computeState). The effects are scrubbed by scroll: if the visitor stops scrolling halfway between Roll and Steep, the pour freezes halfway. The required mechanism is absent. A does avoid extra scroll distance in a different way, by squeezing each effect into the one-viewport scroll-in of its section."}, {"text": "The playhead moves faster when it is more than one section behind its target (catch-up), rather than playing skipped sections at normal speed", "passed": false, "evidence": "No playhead and no catch-up logic. The only time-based element is an exponential follow on t (main.ts, FOLLOW = 10, about 0.3 s to settle), so a jump of three sections plays all of them inside roughly 0.3 s, with the same pacing whatever the distance."}, {"text": "Scrolling back up is handled: effects are pure functions of the playhead (so they reverse) and the rewind is at least as fast as playing forward", "passed": false, "evidence": "The mechanism the expectation names (a playhead) does not exist. In substance, reverse scrolling is handled. computeState(t) is pure and check.ts asserts computeState(2.4) deepEquals itself (a weak purity check). The rewind uses the same symmetric exponential follow, so it runs at the same speed as forward. The user's actual concern is covered, but per the grading rule an absent mechanism fails."}, {"text": "The teapot water level is derived from the leaves' landing progress (e.g. share of leaves landed), not from an independent timer or threshold", "passed": true, "evidence": "timeline.ts computeState: inside the per-leaf loop, fill += remap(steep, start + FALL, start + FALL + SOAK) / DROPS, where start + FALL is exactly the moment leaf k's drop f reaches 1. Each leaf adds 1/DROPS after it lands. The fill comes from the same per-leaf schedule (dropStart, FALL), not from a separate timer, so retuning FALL or dropStart moves the water with it. check.ts sweeps t from 0 to 3 and asserts fill*DROPS <= landed leaves. The water reads the drop schedule, not the landed flag itself, but it stays coupled to it."}, {"text": "The playhead advances by real elapsed time with a generous cap (\u2265 ~0.1 s), not a tiny per-frame cap that makes slow devices run in slow motion", "passed": false, "evidence": "There is no playhead. main.ts eases t with dt = Math.min((now - last)/1000, 0.1) and 1 - exp(-dt*FOLLOW), so the easing uses real time with a 0.1 s cap and would not slow down on slow devices. The mechanism the expectation names is absent."}, {"text": "prefers-reduced-motion is respected (effects jump to their end state or motion is reduced)", "passed": true, "evidence": "main.ts: shown = ... reduceMotion.matches ? target : eased, which removes the easing, and view.update(shown, reduceMotion.matches ? 0 : now/1000) passes time 0, which stops the idle sway (scene.ts sin(time*...)). The media query object is read every frame, so it also reacts to a live change. Effects are still scrubbed by scroll, which is acceptable because the scrubbing is user-driven."}, {"text": "Provides a way to verify the timing logic: unit tests for the pure step/position functions and/or exposed playhead state for end-to-end tests", "passed": true, "evidence": "src/check.ts (node src/check.ts prints 'timeline ok'; I ran it on Node 22 and it exited 0). It covers progressFromScroll at several points, anchorsFrom clamping for a short last section, the settled state of each section, a 3000-step sweep with no position jumps at seams, and water never ahead of landed leaves. There is no time-based logic to test and no exposed DOM state for end-to-end waits, but the position functions are unit-tested, which meets the 'and/or'."}], "summary": {"passed": 4, "failed": 4, "total": 8, "pass_rate": 0.5}, "claims": [{"claim": "node src/check.ts prints 'timeline ok' and passes", "type": "factual", "verified": true, "evidence": "Ran under Node v22.22.3: output 'timeline ok', exit 0."}, {"claim": "The whole story takes 3 screen-heights of scrolling; each transition finishes just before its section fills the screen", "type": "factual", "verified": true, "evidence": "index.html: sections are min-height 100vh with no pinning. In computeState every effect window ends at or before integer t (wilt 0.85, curl 1.85, the last drop and soak at steep 0.95)."}, {"claim": "Water can never rise before a leaf lands", "type": "quality", "verified": true, "evidence": "The fill window for leaf k starts at start+FALL, which is when f reaches 1. The check sweep asserts it."}, {"claim": "scene.ts and main.ts were checked for syntax", "type": "process", "verified": false, "evidence": "Can't be verified: no transcript, and three is not installed, so it can't be type-checked here. On reading, the code looks plausible: morph targets are absolute (morphTargetsRelative false), and influences are set on hero.morphTargetInfluences, which three populates from morphAttributes."}], "user_notes_summary": {"uncertainties": ["Not run in a browser; only the pure timeline was executed"], "needs_review": ["No scroll-snap, so a visitor who stops mid-transition sees a half-wilted or half-poured frame"], "workarounds": []}, "eval_feedback": {"suggestions": [{"assertion": "Per-section effects (wilt, curl, pour) play on a time-based playhead...", "reason": "A fails 4 of 8 expectations purely on architecture, even though the scroll-scrub design does meet the user's literal request ('don't want visitors to have to scroll a ton per section'): each section is one viewport, and effects reverse and stay in sync. Its real weaknesses are not what the assertions name. The Steep pour plays while Steep is still scrolling in, so by the time the copy fills the screen it is over. A visitor who stops between sections sees a frozen half-pour. A fast fling compresses the whole story into the 0.3 s ease. An outcome-level assertion ('a section's effect plays to completion while the visitor rests on that section, without further scrolling') would separate the two designs on behaviour instead of on mechanism."}, {"assertion": "The playhead advances by real elapsed time with a generous cap...", "reason": "This one is unfalsifiable for a scrub design. A's easing already uses real dt with a 0.1 s cap, so the slow-motion bug can't occur, yet it fails on wording alone."}, {"reason": "No assertion checks layout, i.e. that the leaf sits beside the copy on alternating sides and does not overlap it at common widths. Both submissions claim it, and neither was viewed in a browser."}], "overall": "Under these assertions A scores 50%, but as a solution for the user it holds up as a clean, simpler alternative. The assertions encode one architecture (two tracks: scroll for position, a time playhead for effects) rather than user-visible outcomes."}, "timing": {"executor_duration_seconds": 278.5, "total_duration_seconds": 278.5}}}], "previous_feedback": {}, "previous_outputs": {}, "benchmark": {"metadata": {"skill_name": "scroll-synced-scene", "skill_path": "<path/to/skill>", "executor_model": "<model-name>", "analyzer_model": "<model-name>", "timestamp": "2026-10-14T01:27:33Z", "evals_run": [1, 2, 3], "runs_per_configuration": 3}, "runs": [{"eval_id": 2, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 6, "failed": 0, "total": 6, "time_seconds": 85.2, "tokens": 0, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Explains that the drop's position is driven by the time playhead (glide happens inside the section's playhead range), which is why it lags when scrolling back up", "passed": true, "evidence": "notes.md section 1 says the drop's position is computed from stage, a time playhead at 1.5 s per section. When scrolling up the page changes section at once, but stage rewinds slowly at the same speed, and the drop stays put meanwhile. The mechanism is right. It is less precise than it could be: it never says the glide sits in the first 40% of the range, which is why the drop stands still for about 0.9 s before moving, and it implies the full 1.5 s."}, {"text": "The fix drives the drop's position from scroll position (continuous fraction through the sections), so it moves in step with the page in both directions", "passed": true, "evidence": "scene.ts scrollPosition() returns i + clamp01(-top/height), a continuous value from 0 to 3, updated on scroll and resize and also called once at load. The drop glides SPOTS[i] to SPOTS[i+1] over smooth(0.1, 0.9, pos - i), with damp(14) smoothing on top. The sim confirms the drop is at x=2.00 right after scrolling up to Harvest. Caveat (not part of this expectation): drop.visible still uses the time playhead, so see eval_feedback."}, {"text": "The honey level is derived from the drips' progress (e.g. average landing progress), not from its own separate smoothstep range", "passed": true, "evidence": "honey.scale.y = max(0.001, landed / drips.length), where landed is the sum of each drip's g. That is literally the average landing progress, and smooth(3.4, 3.95) is gone. Side effect: because it averages fall progress rather than landings, the jar rises while the drips are still in the air. Sim: drip at y=0.54 of a 2 to -0.7 fall, honey already 0.47. The drip schedule is unchanged too (offsets of 0.01, so all 5 drips fall together)."}, {"text": "Identifies the 0.033 s per-frame dt cap in main.ts as the cause of slow motion on slow machines and replaces it with real elapsed time (with a larger cap)", "passed": true, "evidence": "notes.md section 3: 15 fps gives a real dt of 0.066 s but the cap allows 0.033, so it runs at half speed. main.ts now uses Math.min(clock.getDelta(), 0.25). Sim: after arriving at Jar, the jar is full in 0.78 s at 60 fps, 0.70 s at 10 fps, and 0.75 s at 4 fps, so there is no slow motion."}, {"text": "Drips and honey level still reverse together when scrolling back up (both remain functions of the playhead)", "passed": true, "evidence": "Both are pure functions of stage in the same loop: honey is the average of the same g values that position the drips. Going back up, the playhead rewinds at REWIND=2.5x, and the drips and the jar reverse together."}, {"text": "Keeps the existing structure (scene.ts update function, main.ts loop) and the code remains valid TypeScript", "passed": true, "evidence": "The update signature and the main.ts frame() loop are unchanged, the scroll listener is kept, and index.html is untouched. The code is valid typed TS: scrollPosition takes {top, height}[], and DOMRect[] fits it. It goes beyond the request, though. It adds exported helpers, a prefers-reduced-motion branch, REWIND/CATCH_UP tuning, and a debug write to document.documentElement.dataset.playhead on every frame (an unrequested per-frame DOM write on a page whose complaint is about slow hardware). Structure is preserved, so this passes."}], "notes": ["Not run in a browser. The author recommends scrolling up and down on the old laptop.", "Drop visibility still lags by about 0.5 s when scrolling back up out of Jar.", "Unrequested additions: reduced-motion handling, a data-playhead attribute written every frame, REWIND/CATCH_UP."]}, {"eval_id": 3, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 6, "failed": 0, "total": 6, "time_seconds": 97.0, "tokens": 0, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Chapters become about one viewport tall and the 300vh pinned scrubbing is removed", "passed": true, "evidence": "index.html: `.chapter { min-height: 100vh; min-height: 100svh; }` and `.panel { min-height: 100svh }`. The 300vh rule and `position: relative` are gone. story.js no longer imports gsap/ScrollTrigger, so there is no pin and no scrub."}, {"text": "The morph plays in real time when a chapter becomes the active one, instead of being scrubbed by scroll distance", "passed": true, "evidence": "story.js onScroll sets `target = activeChapter(rects, innerHeight) + 1` (activeChapter = last chapter whose top <= innerHeight/2). frame() advances `stage = step(stage, target, dt)` using wall-clock dt, and step() moves at playRate = 1/1.6 chapters/s for a 1-chapter gap. The scroll only picks the target and never sets stage. Running `node journey.check.mjs` prints `oneChapter: '1.62'`."}, {"text": "The planet's position between chapters follows the scroll continuously (scroll-linked), separately from the morph timing", "passed": true, "evidence": "pos = scrollPosition(rects) (fractional chapter index taken from getBoundingClientRect). x = glide(X, pos) smoothsteps X[i] -> X[i+1] across 0.1..0.9 of the scroll between chapters, with a light damp (lambda 14) only to smooth wheel steps. This is independent of `stage`. Caveat: below 768px, x is locked to 0 and y to 1.2, so on phones the planet does not move with scroll at all. That was an unrequested layout change, though it does fix the original's off-screen x=\u00b12 on phones."}, {"text": "Jumping several chapters via nav links fast-forwards through the skipped morphs (speed grows with the backlog) instead of playing each at normal speed or queueing", "passed": true, "evidence": "playRate(gap) = (1 + 3*max(0,|gap|-1))/1.6, so speed grows linearly with the backlog. A single playhead means nothing queues. `html { scroll-behavior: smooth }` makes the nav glide, so the planet's x sweeps through the intermediate chapters too. The check script gives `jump0to4: '2.82'` against 6.4 s at normal speed, and asserts there is no overshoot and that the playhead lands exactly."}, {"text": "Scrolling back up rewinds the morph to the end state of the chapter now on screen, at least as fast as forward", "passed": true, "evidence": "When scrolling up, target becomes activeChapter+1, which is the end state of the on-screen chapter. For gap<0, playRate multiplies by REWIND=2.5, and the catch-up term also applies. The check asserts rewind < half of forward and prints `rewind: '0.65'` against 1.62 forward. Position reverses exactly because it is a pure function of scroll."}, {"text": "prefers-reduced-motion is respected", "passed": true, "evidence": "story.js checks matchMedia live every frame. Under reduce it sets `stage = target` and `position.set(x, y, 0)` with no damping. index.html: `@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }`. Position still tracks scroll in that mode, which is direct manipulation and acceptable."}], "notes": ["Not run in a browser and planet.js was unavailable, so nothing was checked visually; the Life chapter at x=0 may sit behind the copy on wide screens", "Unrequested layout changes: phone layout (planet centered above the copy, x no longer moves), and #c1 copy right-aligned on wide screens"]}, {"eval_id": 1, "configuration": "with_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 8, "failed": 0, "total": 8, "time_seconds": 322.8, "tokens": 0, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "The leaf's position between sections is computed from a continuous scroll position (how far the page has scrolled through the sections), not from the time-based playhead", "passed": true, "evidence": "journey.ts scrollPosition(rects): pos = i + clamp01(-r.top / r.height) for the last section whose top is above the viewport top, giving a continuous section index stored in journey.scroll on every scroll and resize. scene.ts: page = damp(page, journey.scroll, 14, dt), and anchor = along(WIDE|NARROW, page) sets where the leaf, the pot and the drop start points sit. journey.stage (the playhead) only drives arrive, wilt, curl, potIn and fallT, not the anchor."}, {"text": "Per-section effects (wilt, curl, pour) play on a time-based playhead whose target is set by the section currently on screen, so a section does not need extra scroll distance to play", "passed": true, "evidence": "journey.ts update(): active = the last section with r.top <= innerHeight/2, and target = active + 1. tick() advances journey.stage by wall-clock dt through step(). timeline.ts maps stage 1..2 to wilt, 2..3 to curl, and 3..4 to pot, drops and water. Sections are 100svh with no pinning (index.html). Once a section passes mid-screen, its effect plays in about 1.6 s with no further scrolling (test: 'section 1.60s')."}, {"text": "The playhead moves faster when it is more than one section behind its target (catch-up), rather than playing skipped sections at normal speed", "passed": true, "evidence": "journey.ts playRate(gap) = (gap<0 ? REWIND : 1) * (1 + CATCH_UP * max(0, |gap| - 1)) / SECONDS_PER_SECTION with CATCH_UP = 3. Speed scales with the backlog beyond one section. I ran the test: a 0\u21924 jump takes 2.82 s, compared with 6.4 s at normal speed."}, {"text": "Scrolling back up is handled: effects are pure functions of the playhead (so they reverse) and the rewind is at least as fast as playing forward", "passed": true, "evidence": "timeline.ts arrive, wilt, curl, potIn, fallT and waterLevel are all pure smoothstep or clamp functions of s. scene.ts recomputes everything from s each frame (leaf.deform(w, c) rebuilds the vertices from w and c, not incrementally). playRate applies REWIND = 2.5 for negative gaps. The test asserts back < one/2, and the measured rewind of one section is 0.65 s against 1.60 s forward."}, {"text": "The teapot water level is derived from the leaves' landing progress (e.g. share of leaves landed), not from an independent timer or threshold", "passed": true, "evidence": "timeline.ts waterLevel(s) = sum over leaves of smoothstep(0.8, 1, fallT(s, i)) / DROPS. It is computed directly from each leaf's fall progress (the last 20% of each fall). journey.test.ts sweeps s from 3 to 4 and asserts landed/DROPS <= level <= atPot/DROPS, plus a monotonic level. Strictly, a leaf adds water during its last 20% of fall, slightly before touchdown, which the author states openly."}, {"text": "The playhead advances by real elapsed time with a generous cap (\u2265 ~0.1 s), not a tiny per-frame cap that makes slow devices run in slow motion", "passed": true, "evidence": "journey.ts tick: journey.stage = step(stage, target, Math.min(0.25, (now - last) / 1000)). Real dt with a 0.25 s cap. The test asserts step(3.99, 4, 0.25) === 4."}, {"text": "prefers-reduced-motion is respected (effects jump to their end state or motion is reduced)", "passed": true, "evidence": "journey.ts update(): if (reducedMotion) { journey.stage = target; settle(); }, so the effects jump to the section's end state. scene.ts forces a = 1 (no drift-in) and time = 0 (no sway) and skips the page damping. Limitation: main.ts reads matchMedia(...).matches once at load, so a change while the page is open is not picked up."}, {"text": "Provides a way to verify the timing logic: unit tests for the pure step/position functions and/or exposed playhead state for end-to-end tests", "passed": true, "evidence": "Both are provided. journey.test.ts (I ran it: 'ok: section 1.60s, 0\u21924 jump 2.82s, rewind 0.65s', exit 0) tests step timing, no overshoot, large-dt landing, scrollPosition (including a tall last section) and the coupling of water to leaves. trackJourney writes <html data-journey='running|idle' data-playhead='N.NN'> for end-to-end waits."}], "notes": ["No frames viewed in a browser", "Steep layout on short phones (<640px tall) may need NARROW tweaks", "Check 390/768/1366/1920 px for leaf/copy overlap", "E2E tests must dispatch a scroll event after scrollTo"]}, {"eval_id": 2, "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 1.0, "passed": 6, "failed": 0, "total": 6, "time_seconds": 155.8, "tokens": 0, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Explains that the drop's position is driven by the time playhead (glide happens inside the section's playhead range), which is why it lags when scrolling back up", "passed": true, "evidence": "notes.md section 1 says stage is not read from scroll. target = active + 1 is an integer, and stage runs toward it at a fixed 1.5 s per section. The drop glides only in the first 40% of each section, so going back up the playhead first rewinds through the last 60% (about 0.9 s) while the drop stays at the old spot. That matches the original scene.ts lines 26-33 exactly, and it accounts for the user's 'about one second'."}, {"text": "The fix drives the drop's position from scroll position (continuous fraction through the sections), so it moves in step with the page in both directions", "passed": true, "evidence": "scene.ts scrollStage() computes k + clamp((scrollY - starts[k]) / (end - starts[k])), a continuous fraction read every frame. stage = damp(stage, scrollStage(), 12, dt), and the drop uses stage. My headless sim matched: the drop is at x=2 at scrollY 0.5VH, x=-2 at 0.9VH, and back at x=2 at 2VH. Scrolling up from the bottom to Harvest, the drop is visible again after 0.07 s. In A's check.mjs, Harvest back to Hive lands within 0.05 units in 0.3 s. The time playhead and the scroll listener are both gone."}, {"text": "The honey level is derived from the drips' progress (e.g. average landing progress), not from its own separate smoothstep range", "passed": true, "evidence": "The separate smooth(3.4, 3.95, stage) is removed. fill is now summed inside the drips loop: each drip adds clamp((stage - (start_k + DRIP_FALL)) / gap, 0, 1) / n, keyed to that drip's own landing time, and the drip constants also schedule the jar. This is not a literal average of g. The intent is met: the level is a function of the drips' schedule, it cannot run ahead of landings, and it is full just after the last drip lands. check.mjs asserts landed-1 <= fill*n <= landed at every scroll step, and it passes."}, {"text": "Identifies the 0.033 s per-frame dt cap in main.ts as the cause of slow motion on slow machines and replaces it with real elapsed time (with a larger cap)", "passed": true, "evidence": "notes.md section 3 identifies Math.min(clock.getDelta(), 0.033): at 15 fps a frame lasts 0.066 s but the animation advances only 0.033 s, so it runs at half speed. main.ts now passes clock.getDelta() with no cap at all. A different mechanism than the expectation names, but the intent is met: everything is scroll-derived, and the only use of dt is exponential damping (1 - exp(-\u03bb\u00b7dt)), which cannot overshoot. A huge dt, such as returning from a background tab, just snaps to the correct scroll state. So a cap has nothing to protect against here, and check.mjs test 3 shows 10 fps and 60 fps agree."}, {"text": "Drips and honey level still reverse together when scrolling back up (both remain functions of the playhead)", "passed": true, "evidence": "Both the drip y positions and fill are pure functions of stage, in the same loop. In A, stage is the damped scroll position, not a time playhead, so both reverse in lockstep with the scroll. The sim confirms it: at 2.75VH honey is 0.25 with 2 drips in the air, and at 3VH honey is 1.00."}, {"text": "Keeps the existing structure (scene.ts update function, main.ts loop) and the code remains valid TypeScript", "passed": true, "evidence": "The update(drop, jar, honey, drips, dt) signature, SPOTS, smooth, the 40%-glide drop block, and the main.ts frame() loop are all unchanged. The diff is small: scrollStage() plus three constants, and the scroll listener is removed. index.html is untouched. The code uses only typed APIs (THREE.MathUtils.clamp/damp/lerp). It runs under Node 22 type-stripping (node check.mjs prints ok), but tsc was not run."}], "notes": ["The drips and jar no longer play automatically when you arrive at the Jar section. They are now scrubbed by the last 0.5VH of scroll. A fling to the bottom fills the jar in about 0.2 s (sim: honey starts at 0.07 s and is full at 0.27 s). If you stop mid-way, drips hang frozen in mid-air (sim at 2.75VH: 2 drips visible, stationary). The notes cover the short scroll range but not the loss of the timed 1.5 s finale.", "The notes suggest raising the Jar section's min-height to 150vh if the finale feels too fast."]}, {"eval_id": 3, "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.83, "passed": 5, "failed": 1, "total": 6, "time_seconds": 68.8, "tokens": 0, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "Chapters become about one viewport tall and the 300vh pinned scrubbing is removed", "passed": true, "evidence": "index.html: `.chapter { height: 100vh; }`. story.js has no gsap/ScrollTrigger import, so there is no pin and no scrub."}, {"text": "The morph plays in real time when a chapter becomes the active one, instead of being scrubbed by scroll distance", "passed": true, "evidence": "An IntersectionObserver with rootMargin '-50% 0px -50% 0px' (a midline) sets `target.morph = i + 1`. frame() integrates a critically damped spring (K=20) toward it with wall-clock dt, so scroll distance only selects the target. Simulated: 90% of a 0->1 morph in 0.88 s. Settling to within 1% of distance at zero velocity takes ~1.9 s, not the ~1.5 s claimed in notes.md. Most of the visible change happens in the first ~0.6 s because the spring is ease-out-heavy, but the morph does complete."}, {"text": "The planet's position between chapters follows the scroll continuously (scroll-linked), separately from the morph timing", "passed": false, "evidence": "Position is not scroll-linked. `target.x = X[i]` is set in the same IO callback as the morph, and `cur.x` is driven by the same time-based spring. While a user scrolls within or between chapters, the planet stays still. When the midline is crossed, it slides on its own timer. Position and morph share one trigger and one timing, the opposite of 'separately from the morph timing'. The original scrubbed x with scroll, so this is a behavior regression the user would feel as the planet lagging or being detached from the page."}, {"text": "Jumping several chapters via nav links fast-forwards through the skipped morphs (speed grows with the backlog) instead of playing each at normal speed or queueing", "passed": true, "evidence": "Passed on intent. The default anchor jump is instant, so the IO reports only the destination chapter and target.morph jumps directly (e.g. 1->4). A linear critically damped spring has distance-independent settle time and velocity proportional to the gap. Simulated: 90% of the way takes 0.88 s for both 0->1 and 1->4, passing through morphs 2 and 3 on the way. Nothing queues. Speed does grow with distance, though as a property of the spring rather than an explicit backlog rate. Caveat: the page itself teleports, because there is no smooth scroll, while the planet glides straight from X[0] to X[3] without visiting the intermediate x positions. That is acceptable, but less of a 'journey' than A."}, {"text": "Scrolling back up rewinds the morph to the end state of the chapter now on screen, at least as fast as forward", "passed": true, "evidence": "Scrolling up makes the previous chapter cross the midline, and the IO sets target.morph = i+1, the end state of the on-screen chapter. The spring is symmetric, so rewind is exactly as fast as forward, which satisfies 'at least as fast'. Reversal mid-morph keeps momentum. Simulated: reversing at morph 2.33 while heading to 3 carries on to 2.395 before returning to 2.0. This is a small but visible continuation in the wrong direction, so notes.md's 'stops exactly at the target with no overshoot' holds only when starting from rest."}, {"text": "prefers-reduced-motion is respected", "passed": true, "evidence": "story.js checks matchMedia live every frame. Under reduce it sets `cur[k] = target[k]; vel[k] = 0`, so morph and x snap. No smooth scrolling was added, so nothing else needs disabling."}], "notes": ["Only the spring was simulated; no browser run"]}, {"eval_id": 1, "configuration": "without_skill", "run_number": 1, "result": {"pass_rate": 0.5, "passed": 4, "failed": 4, "total": 8, "time_seconds": 278.5, "tokens": 0, "tool_calls": 0, "errors": 0}, "expectations": [{"text": "The leaf's position between sections is computed from a continuous scroll position (how far the page has scrolled through the sections), not from the time-based playhead", "passed": true, "evidence": "src/main.ts: target = progressFromScroll(scrollY, anchors), a piecewise-linear continuous section index built from the measured section tops (timeline.ts anchorsFrom/progressFromScroll). computeState(t) puts the hero leaf at lerp(SIDE[seg], SIDE[seg+1], u) where u comes from that t. There is no time-based playhead at all, so the position cannot come from one."}, {"text": "Per-section effects (wilt, curl, pour) play on a time-based playhead whose target is set by the section currently on screen, so a section does not need extra scroll distance to play", "passed": false, "evidence": "There is no playhead. wilt = smooth(remap(t, 0.25, 0.85)), curl = remap(t, 1.25, 1.85), and the drops and fill are all functions of the eased scroll index t (timeline.ts computeState). The effects are scrubbed by scroll: if the visitor stops scrolling halfway between Roll and Steep, the pour freezes halfway. The required mechanism is absent. A does avoid extra scroll distance in a different way, by squeezing each effect into the one-viewport scroll-in of its section."}, {"text": "The playhead moves faster when it is more than one section behind its target (catch-up), rather than playing skipped sections at normal speed", "passed": false, "evidence": "No playhead and no catch-up logic. The only time-based element is an exponential follow on t (main.ts, FOLLOW = 10, about 0.3 s to settle), so a jump of three sections plays all of them inside roughly 0.3 s, with the same pacing whatever the distance."}, {"text": "Scrolling back up is handled: effects are pure functions of the playhead (so they reverse) and the rewind is at least as fast as playing forward", "passed": false, "evidence": "The mechanism the expectation names (a playhead) does not exist. In substance, reverse scrolling is handled. computeState(t) is pure and check.ts asserts computeState(2.4) deepEquals itself (a weak purity check). The rewind uses the same symmetric exponential follow, so it runs at the same speed as forward. The user's actual concern is covered, but per the grading rule an absent mechanism fails."}, {"text": "The teapot water level is derived from the leaves' landing progress (e.g. share of leaves landed), not from an independent timer or threshold", "passed": true, "evidence": "timeline.ts computeState: inside the per-leaf loop, fill += remap(steep, start + FALL, start + FALL + SOAK) / DROPS, where start + FALL is exactly the moment leaf k's drop f reaches 1. Each leaf adds 1/DROPS after it lands. The fill comes from the same per-leaf schedule (dropStart, FALL), not from a separate timer, so retuning FALL or dropStart moves the water with it. check.ts sweeps t from 0 to 3 and asserts fill*DROPS <= landed leaves. The water reads the drop schedule, not the landed flag itself, but it stays coupled to it."}, {"text": "The playhead advances by real elapsed time with a generous cap (\u2265 ~0.1 s), not a tiny per-frame cap that makes slow devices run in slow motion", "passed": false, "evidence": "There is no playhead. main.ts eases t with dt = Math.min((now - last)/1000, 0.1) and 1 - exp(-dt*FOLLOW), so the easing uses real time with a 0.1 s cap and would not slow down on slow devices. The mechanism the expectation names is absent."}, {"text": "prefers-reduced-motion is respected (effects jump to their end state or motion is reduced)", "passed": true, "evidence": "main.ts: shown = ... reduceMotion.matches ? target : eased, which removes the easing, and view.update(shown, reduceMotion.matches ? 0 : now/1000) passes time 0, which stops the idle sway (scene.ts sin(time*...)). The media query object is read every frame, so it also reacts to a live change. Effects are still scrubbed by scroll, which is acceptable because the scrubbing is user-driven."}, {"text": "Provides a way to verify the timing logic: unit tests for the pure step/position functions and/or exposed playhead state for end-to-end tests", "passed": true, "evidence": "src/check.ts (node src/check.ts prints 'timeline ok'; I ran it on Node 22 and it exited 0). It covers progressFromScroll at several points, anchorsFrom clamping for a short last section, the settled state of each section, a 3000-step sweep with no position jumps at seams, and water never ahead of landed leaves. There is no time-based logic to test and no exposed DOM state for end-to-end waits, but the position functions are unit-tested, which meets the 'and/or'."}], "notes": ["Not run in a browser; only the pure timeline was executed", "No scroll-snap, so a visitor who stops mid-transition sees a half-wilted or half-poured frame"]}], "run_summary": {"with_skill": {"pass_rate": {"mean": 1.0, "stddev": 0.0, "min": 1.0, "max": 1.0}, "time_seconds": {"mean": 168.3333, "stddev": 133.9021, "min": 85.2, "max": 322.8}, "tokens": {"mean": 0.0, "stddev": 0.0, "min": 0, "max": 0}}, "without_skill": {"pass_rate": {"mean": 0.7767, "stddev": 0.2542, "min": 0.5, "max": 1.0}, "time_seconds": {"mean": 167.7, "stddev": 105.3553, "min": 68.8, "max": 278.5}, "tokens": {"mean": 0.0, "stddev": 0.0, "min": 0, "max": 0}}, "delta": {"pass_rate": "+0.22", "time_seconds": "+0.6", "tokens": "+0"}}, "notes": []}};
+
+    // ---- State ----
+    let feedbackMap = {};  // run_id -> feedback text
+    let currentIndex = 0;
+    let visitedRuns = new Set();
+
+    // ---- Init ----
+    async function init() {
+      // Load saved feedback from server — but only if this isn't a fresh
+      // iteration (indicated by previous_feedback being present). When
+      // previous feedback exists, the feedback.json on disk is stale from
+      // the prior iteration and should not pre-fill the textareas.
+      const hasPrevious = Object.keys(EMBEDDED_DATA.previous_feedback || {}).length > 0
+        || Object.keys(EMBEDDED_DATA.previous_outputs || {}).length > 0;
+      if (!hasPrevious) {
+        try {
+          const resp = await fetch("/api/feedback");
+          const data = await resp.json();
+          if (data.reviews) {
+            for (const r of data.reviews) feedbackMap[r.run_id] = r.feedback;
+          }
+        } catch { /* first run, no feedback yet */ }
+      }
+
+      document.getElementById("skill-name").textContent = EMBEDDED_DATA.skill_name;
+      showRun(0);
+
+      // Wire up feedback auto-save
+      const textarea = document.getElementById("feedback");
+      let saveTimeout = null;
+      textarea.addEventListener("input", () => {
+        clearTimeout(saveTimeout);
+        document.getElementById("feedback-status").textContent = "";
+        saveTimeout = setTimeout(() => saveCurrentFeedback(), 800);
+      });
+    }
+
+    // ---- Navigation ----
+    function navigate(delta) {
+      const newIndex = currentIndex + delta;
+      if (newIndex >= 0 && newIndex < EMBEDDED_DATA.runs.length) {
+        saveCurrentFeedback();
+        showRun(newIndex);
+      }
+    }
+
+    function updateNavButtons() {
+      document.getElementById("prev-btn").disabled = currentIndex === 0;
+      document.getElementById("next-btn").disabled =
+        currentIndex === EMBEDDED_DATA.runs.length - 1;
+    }
+
+    // ---- Show a run ----
+    function showRun(index) {
+      currentIndex = index;
+      const run = EMBEDDED_DATA.runs[index];
+
+      // Progress
+      document.getElementById("progress").textContent =
+        `${index + 1} of ${EMBEDDED_DATA.runs.length}`;
+
+      // Prompt
+      document.getElementById("prompt-text").textContent = run.prompt;
+
+      // Config badge
+      const badge = document.getElementById("config-badge");
+      const configMatch = run.id.match(/(with_skill|without_skill|new_skill|old_skill)/);
+      if (configMatch) {
+        const config = configMatch[1];
+        const isBaseline = config === "without_skill" || config === "old_skill";
+        badge.textContent = config.replace(/_/g, " ");
+        badge.className = "config-badge " + (isBaseline ? "config-baseline" : "config-primary");
+        badge.style.display = "inline-block";
+      } else {
+        badge.style.display = "none";
+      }
+
+      // Outputs
+      renderOutputs(run);
+
+      // Previous outputs
+      renderPrevOutputs(run);
+
+      // Grades
+      renderGrades(run);
+
+      // Previous feedback
+      const prevFb = (EMBEDDED_DATA.previous_feedback || {})[run.id];
+      const prevEl = document.getElementById("prev-feedback");
+      if (prevFb) {
+        document.getElementById("prev-feedback-text").textContent = prevFb;
+        prevEl.style.display = "block";
+      } else {
+        prevEl.style.display = "none";
+      }
+
+      // Feedback
+      document.getElementById("feedback").value = feedbackMap[run.id] || "";
+      document.getElementById("feedback-status").textContent = "";
+
+      updateNavButtons();
+
+      // Track visited runs and promote done button when all visited
+      visitedRuns.add(index);
+      const doneBtn = document.getElementById("done-btn");
+      if (visitedRuns.size >= EMBEDDED_DATA.runs.length) {
+        doneBtn.classList.add("ready");
+      }
+
+      // Scroll main content to top
+      document.querySelector(".main").scrollTop = 0;
+    }
+
+    // ---- Render outputs ----
+    function renderOutputs(run) {
+      const container = document.getElementById("outputs-body");
+      container.innerHTML = "";
+
+      const outputs = run.outputs || [];
+      if (outputs.length === 0) {
+        container.innerHTML = '<div class="empty-state">No output files</div>';
+        return;
+      }
+
+      for (const file of outputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        // Always show file header with download link
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const content = document.createElement("div");
+        content.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          content.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          content.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          content.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(content, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          content.appendChild(a);
+        } else if (file.type === "error") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          pre.style.color = "var(--red)";
+          content.appendChild(pre);
+        }
+
+        fileDiv.appendChild(content);
+        container.appendChild(fileDiv);
+      }
+    }
+
+    // ---- XLSX rendering via SheetJS ----
+    function renderXlsx(container, b64Data) {
+      try {
+        const raw = Uint8Array.from(atob(b64Data), c => c.charCodeAt(0));
+        const wb = XLSX.read(raw, { type: "array" });
+
+        for (let i = 0; i < wb.SheetNames.length; i++) {
+          const sheetName = wb.SheetNames[i];
+          const ws = wb.Sheets[sheetName];
+
+          if (wb.SheetNames.length > 1) {
+            const sheetLabel = document.createElement("div");
+            sheetLabel.style.cssText =
+              "font-weight:600; font-size:0.8rem; color:#b0aea5; margin-top:0.5rem; margin-bottom:0.25rem;";
+            sheetLabel.textContent = "Sheet: " + sheetName;
+            container.appendChild(sheetLabel);
+          }
+
+          const htmlStr = XLSX.utils.sheet_to_html(ws, { editable: false });
+          const wrapper = document.createElement("div");
+          wrapper.innerHTML = htmlStr;
+          container.appendChild(wrapper);
+        }
+      } catch (err) {
+        container.textContent = "Error rendering spreadsheet: " + err.message;
+      }
+    }
+
+    // ---- Grades ----
+    function renderGrades(run) {
+      const section = document.getElementById("grades-section");
+      const content = document.getElementById("grades-content");
+
+      if (!run.grading) {
+        section.style.display = "none";
+        return;
+      }
+
+      const grading = run.grading;
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("grades-arrow").classList.remove("open");
+
+      const summary = grading.summary || {};
+      const expectations = grading.expectations || [];
+
+      let html = '<div style="padding: 1rem;">';
+
+      // Summary line
+      const passRate = summary.pass_rate != null
+        ? Math.round(summary.pass_rate * 100) + "%"
+        : "?";
+      const badgeClass = summary.pass_rate >= 0.8 ? "grade-pass" : summary.pass_rate >= 0.5 ? "" : "grade-fail";
+      html += '<div class="grades-summary">';
+      html += '<span class="grade-badge ' + badgeClass + '">' + passRate + '</span>';
+      html += '<span>' + (summary.passed || 0) + ' passed, ' + (summary.failed || 0) + ' failed of ' + (summary.total || 0) + '</span>';
+      html += '</div>';
+
+      // Assertions list
+      html += '<ul class="assertion-list">';
+      for (const exp of expectations) {
+        const statusClass = exp.passed ? "pass" : "fail";
+        const statusIcon = exp.passed ? "\u2713" : "\u2717";
+        html += '<li class="assertion-item">';
+        html += '<span class="assertion-status ' + statusClass + '">' + statusIcon + '</span>';
+        html += '<span>' + escapeHtml(exp.text) + '</span>';
+        if (exp.evidence) {
+          html += '<div class="assertion-evidence">' + escapeHtml(exp.evidence) + '</div>';
+        }
+        html += '</li>';
+      }
+      html += '</ul>';
+
+      html += '</div>';
+      content.innerHTML = html;
+    }
+
+    function toggleGrades() {
+      const content = document.getElementById("grades-content");
+      const arrow = document.getElementById("grades-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Previous outputs (collapsible) ----
+    function renderPrevOutputs(run) {
+      const section = document.getElementById("prev-outputs-section");
+      const content = document.getElementById("prev-outputs-content");
+      const prevOutputs = (EMBEDDED_DATA.previous_outputs || {})[run.id];
+
+      if (!prevOutputs || prevOutputs.length === 0) {
+        section.style.display = "none";
+        return;
+      }
+
+      section.style.display = "block";
+      // Reset to collapsed
+      content.classList.remove("open");
+      document.getElementById("prev-outputs-arrow").classList.remove("open");
+
+      // Render the files into the content area
+      content.innerHTML = "";
+      const wrapper = document.createElement("div");
+      wrapper.style.padding = "1rem";
+
+      for (const file of prevOutputs) {
+        const fileDiv = document.createElement("div");
+        fileDiv.className = "output-file";
+
+        const header = document.createElement("div");
+        header.className = "output-file-header";
+        const nameSpan = document.createElement("span");
+        nameSpan.textContent = file.name;
+        header.appendChild(nameSpan);
+        const dlBtn = document.createElement("a");
+        dlBtn.className = "dl-btn";
+        dlBtn.textContent = "Download";
+        dlBtn.download = file.name;
+        dlBtn.href = getDownloadUri(file);
+        header.appendChild(dlBtn);
+        fileDiv.appendChild(header);
+
+        const fc = document.createElement("div");
+        fc.className = "output-file-content";
+
+        if (file.type === "text") {
+          const pre = document.createElement("pre");
+          pre.textContent = file.content;
+          fc.appendChild(pre);
+        } else if (file.type === "image") {
+          const img = document.createElement("img");
+          img.src = file.data_uri;
+          img.alt = file.name;
+          fc.appendChild(img);
+        } else if (file.type === "pdf") {
+          const iframe = document.createElement("iframe");
+          iframe.src = file.data_uri;
+          fc.appendChild(iframe);
+        } else if (file.type === "xlsx") {
+          renderXlsx(fc, file.data_b64);
+        } else if (file.type === "binary") {
+          const a = document.createElement("a");
+          a.className = "download-link";
+          a.href = file.data_uri;
+          a.download = file.name;
+          a.textContent = "Download " + file.name;
+          fc.appendChild(a);
+        }
+
+        fileDiv.appendChild(fc);
+        wrapper.appendChild(fileDiv);
+      }
+
+      content.appendChild(wrapper);
+    }
+
+    function togglePrevOutputs() {
+      const content = document.getElementById("prev-outputs-content");
+      const arrow = document.getElementById("prev-outputs-arrow");
+      content.classList.toggle("open");
+      arrow.classList.toggle("open");
+    }
+
+    // ---- Feedback (saved to server -> feedback.json) ----
+    function saveCurrentFeedback() {
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // Build reviews array from map
+      const reviews = [];
+      for (const [run_id, feedback] of Object.entries(feedbackMap)) {
+        if (feedback.trim()) {
+          reviews.push({ run_id, feedback, timestamp: new Date().toISOString() });
+        }
+      }
+
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ reviews, status: "in_progress" }),
+      }).then(() => {
+        document.getElementById("feedback-status").textContent = "Saved";
+      }).catch(() => {
+        // Static mode or server unavailable — no-op on auto-save,
+        // feedback will be downloaded on final submit
+        document.getElementById("feedback-status").textContent = "Will download on submit";
+      });
+    }
+
+    // ---- Done ----
+    function showDoneDialog() {
+      // Save current textarea to feedbackMap (but don't POST yet)
+      const run = EMBEDDED_DATA.runs[currentIndex];
+      const text = document.getElementById("feedback").value;
+      if (text.trim() === "") {
+        delete feedbackMap[run.id];
+      } else {
+        feedbackMap[run.id] = text;
+      }
+
+      // POST once with status: complete — include ALL runs so the model
+      // can distinguish "no feedback" (looks good) from "not reviewed"
+      const reviews = [];
+      const ts = new Date().toISOString();
+      for (const r of EMBEDDED_DATA.runs) {
+        reviews.push({ run_id: r.id, feedback: feedbackMap[r.id] || "", timestamp: ts });
+      }
+      const payload = JSON.stringify({ reviews, status: "complete" }, null, 2);
+      fetch("/api/feedback", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: payload,
+      }).then(() => {
+        document.getElementById("done-overlay").classList.add("visible");
+      }).catch(() => {
+        // Server not available (static mode) — download as file
+        const blob = new Blob([payload], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "feedback.json";
+        a.click();
+        URL.revokeObjectURL(url);
+        document.getElementById("done-overlay").classList.add("visible");
+      });
+    }
+
+    function closeDoneDialog() {
+      // Reset status back to in_progress
+      saveCurrentFeedback();
+      document.getElementById("done-overlay").classList.remove("visible");
+    }
+
+    // ---- Toast ----
+    function showToast(message) {
+      const toast = document.getElementById("toast");
+      toast.textContent = message;
+      toast.classList.add("visible");
+      setTimeout(() => toast.classList.remove("visible"), 2000);
+    }
+
+    // ---- Keyboard nav ----
+    document.addEventListener("keydown", (e) => {
+      // Don't capture when typing in textarea
+      if (e.target.tagName === "TEXTAREA") return;
+
+      if (e.key === "ArrowLeft" || e.key === "ArrowUp") {
+        e.preventDefault();
+        navigate(-1);
+      } else if (e.key === "ArrowRight" || e.key === "ArrowDown") {
+        e.preventDefault();
+        navigate(1);
+      }
+    });
+
+    // ---- Util ----
+    function getDownloadUri(file) {
+      if (file.data_uri) return file.data_uri;
+      if (file.data_b64) return "data:application/octet-stream;base64," + file.data_b64;
+      if (file.type === "text") return "data:text/plain;charset=utf-8," + encodeURIComponent(file.content);
+      return "#";
+    }
+
+    function escapeHtml(text) {
+      const div = document.createElement("div");
+      div.textContent = text;
+      return div.innerHTML;
+    }
+
+    // ---- View switching ----
+    function switchView(view) {
+      document.querySelectorAll(".view-tab").forEach(t => t.classList.remove("active"));
+      document.querySelectorAll(".view-panel").forEach(p => p.classList.remove("active"));
+      document.querySelector(`[onclick="switchView('${view}')"]`).classList.add("active");
+      document.getElementById("panel-" + view).classList.add("active");
+    }
+
+    // ---- Benchmark rendering ----
+    function renderBenchmark() {
+      const data = EMBEDDED_DATA.benchmark;
+      if (!data) return;
+
+      // Show the tabs
+      document.getElementById("view-tabs").style.display = "flex";
+
+      const container = document.getElementById("benchmark-content");
+      const summary = data.run_summary || {};
+      const metadata = data.metadata || {};
+      const notes = data.notes || [];
+
+      let html = "";
+
+      // Header
+      html += "<h2 style='font-family: Poppins, sans-serif; margin-bottom: 0.5rem;'>Benchmark Results</h2>";
+      html += "<p style='color: var(--text-muted); font-size: 0.875rem; margin-bottom: 1.25rem;'>";
+      if (metadata.skill_name) html += "<strong>" + escapeHtml(metadata.skill_name) + "</strong> &mdash; ";
+      if (metadata.timestamp) html += metadata.timestamp + " &mdash; ";
+      if (metadata.evals_run) html += "Evals: " + metadata.evals_run.join(", ") + " &mdash; ";
+      html += (metadata.runs_per_configuration || "?") + " runs per configuration";
+      html += "</p>";
+
+      // Summary table
+      html += '<table class="benchmark-table">';
+
+      function fmtStat(stat, pct) {
+        if (!stat) return "—";
+        const suffix = pct ? "%" : "";
+        const m = pct ? (stat.mean * 100).toFixed(0) : stat.mean.toFixed(1);
+        const s = pct ? (stat.stddev * 100).toFixed(0) : stat.stddev.toFixed(1);
+        return m + suffix + " ± " + s + suffix;
+      }
+
+      function deltaClass(val) {
+        if (!val) return "";
+        const n = parseFloat(val);
+        if (n > 0) return "benchmark-delta-positive";
+        if (n < 0) return "benchmark-delta-negative";
+        return "";
+      }
+
+      // Discover config names dynamically (everything except "delta")
+      const configs = Object.keys(summary).filter(k => k !== "delta");
+      const configA = configs[0] || "config_a";
+      const configB = configs[1] || "config_b";
+      const labelA = configA.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const labelB = configB.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+      const a = summary[configA] || {};
+      const b = summary[configB] || {};
+      const delta = summary.delta || {};
+
+      html += "<thead><tr><th>Metric</th><th>" + escapeHtml(labelA) + "</th><th>" + escapeHtml(labelB) + "</th><th>Delta</th></tr></thead>";
+      html += "<tbody>";
+
+      html += "<tr><td><strong>Pass Rate</strong></td>";
+      html += "<td>" + fmtStat(a.pass_rate, true) + "</td>";
+      html += "<td>" + fmtStat(b.pass_rate, true) + "</td>";
+      html += '<td class="' + deltaClass(delta.pass_rate) + '">' + (delta.pass_rate || "—") + "</td></tr>";
+
+      // Time (only show row if data exists)
+      if (a.time_seconds || b.time_seconds) {
+        html += "<tr><td><strong>Time (s)</strong></td>";
+        html += "<td>" + fmtStat(a.time_seconds, false) + "</td>";
+        html += "<td>" + fmtStat(b.time_seconds, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.time_seconds) + '">' + (delta.time_seconds ? delta.time_seconds + "s" : "—") + "</td></tr>";
+      }
+
+      // Tokens (only show row if data exists)
+      if (a.tokens || b.tokens) {
+        html += "<tr><td><strong>Tokens</strong></td>";
+        html += "<td>" + fmtStat(a.tokens, false) + "</td>";
+        html += "<td>" + fmtStat(b.tokens, false) + "</td>";
+        html += '<td class="' + deltaClass(delta.tokens) + '">' + (delta.tokens || "—") + "</td></tr>";
+      }
+
+      html += "</tbody></table>";
+
+      // Per-eval breakdown (if runs data available)
+      const runs = data.runs || [];
+      if (runs.length > 0) {
+        const evalIds = [...new Set(runs.map(r => r.eval_id))].sort((a, b) => a - b);
+
+        html += "<h3 style='font-family: Poppins, sans-serif; margin-bottom: 0.75rem;'>Per-Eval Breakdown</h3>";
+
+        const hasTime = runs.some(r => r.result && r.result.time_seconds != null);
+        const hasErrors = runs.some(r => r.result && r.result.errors > 0);
+
+        for (const evalId of evalIds) {
+          const evalRuns = runs.filter(r => r.eval_id === evalId);
+          const evalName = evalRuns[0] && evalRuns[0].eval_name ? evalRuns[0].eval_name : "Eval " + evalId;
+
+          html += "<h4 style='font-family: Poppins, sans-serif; margin: 1rem 0 0.5rem; color: var(--text);'>" + escapeHtml(evalName) + "</h4>";
+          html += '<table class="benchmark-table">';
+          html += "<thead><tr><th>Config</th><th>Run</th><th>Pass Rate</th>";
+          if (hasTime) html += "<th>Time (s)</th>";
+          if (hasErrors) html += "<th>Crashes During Execution</th>";
+          html += "</tr></thead>";
+          html += "<tbody>";
+
+          // Group by config and render with average rows
+          const configGroups = [...new Set(evalRuns.map(r => r.configuration))];
+          for (let ci = 0; ci < configGroups.length; ci++) {
+            const config = configGroups[ci];
+            const configRuns = evalRuns.filter(r => r.configuration === config);
+            if (configRuns.length === 0) continue;
+
+            const rowClass = ci === 0 ? "benchmark-row-with" : "benchmark-row-without";
+            const configLabel = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+
+            for (const run of configRuns) {
+              const r = run.result || {};
+              const prClass = r.pass_rate >= 0.8 ? "benchmark-delta-positive" : r.pass_rate < 0.5 ? "benchmark-delta-negative" : "";
+              html += '<tr class="' + rowClass + '">';
+              html += "<td>" + configLabel + "</td>";
+              html += "<td>" + run.run_number + "</td>";
+              html += '<td class="' + prClass + '">' + ((r.pass_rate || 0) * 100).toFixed(0) + "% (" + (r.passed || 0) + "/" + (r.total || 0) + ")</td>";
+              if (hasTime) html += "<td>" + (r.time_seconds != null ? r.time_seconds.toFixed(1) : "—") + "</td>";
+              if (hasErrors) html += "<td>" + (r.errors || 0) + "</td>";
+              html += "</tr>";
+            }
+
+            // Average row
+            const rates = configRuns.map(r => (r.result || {}).pass_rate || 0);
+            const avgRate = rates.reduce((a, b) => a + b, 0) / rates.length;
+            const avgPrClass = avgRate >= 0.8 ? "benchmark-delta-positive" : avgRate < 0.5 ? "benchmark-delta-negative" : "";
+            html += '<tr class="benchmark-row-avg ' + rowClass + '">';
+            html += "<td>" + configLabel + "</td>";
+            html += "<td>Avg</td>";
+            html += '<td class="' + avgPrClass + '">' + (avgRate * 100).toFixed(0) + "%</td>";
+            if (hasTime) {
+              const times = configRuns.map(r => (r.result || {}).time_seconds).filter(t => t != null);
+              html += "<td>" + (times.length ? (times.reduce((a, b) => a + b, 0) / times.length).toFixed(1) : "—") + "</td>";
+            }
+            if (hasErrors) html += "<td></td>";
+            html += "</tr>";
+          }
+          html += "</tbody></table>";
+
+          // Per-assertion detail for this eval
+          const runsWithExpectations = {};
+          for (const config of configGroups) {
+            runsWithExpectations[config] = evalRuns.filter(r => r.configuration === config && r.expectations && r.expectations.length > 0);
+          }
+          const hasAnyExpectations = Object.values(runsWithExpectations).some(runs => runs.length > 0);
+          if (hasAnyExpectations) {
+            // Collect all unique assertion texts across all configs
+            const allAssertions = [];
+            const seen = new Set();
+            for (const config of configGroups) {
+              for (const run of runsWithExpectations[config]) {
+                for (const exp of (run.expectations || [])) {
+                  if (!seen.has(exp.text)) {
+                    seen.add(exp.text);
+                    allAssertions.push(exp.text);
+                  }
+                }
+              }
+            }
+
+            html += '<table class="benchmark-table" style="margin-top: 0.5rem;">';
+            html += "<thead><tr><th>Assertion</th>";
+            for (const config of configGroups) {
+              const label = config.replace(/_/g, " ").replace(/\b\w/g, c => c.toUpperCase());
+              html += "<th>" + escapeHtml(label) + "</th>";
+            }
+            html += "</tr></thead><tbody>";
+
+            for (const assertionText of allAssertions) {
+              html += "<tr><td>" + escapeHtml(assertionText) + "</td>";
+
+              for (const config of configGroups) {
+                html += "<td>";
+                for (const run of runsWithExpectations[config]) {
+                  const exp = (run.expectations || []).find(e => e.text === assertionText);
+                  if (exp) {
+                    const cls = exp.passed ? "benchmark-delta-positive" : "benchmark-delta-negative";
+                    const icon = exp.passed ? "\u2713" : "\u2717";
+                    html += '<span class="' + cls + '" title="Run ' + run.run_number + ': ' + escapeHtml(exp.evidence || "") + '">' + icon + "</span> ";
+                  } else {
+                    html += "— ";
+                  }
+                }
+                html += "</td>";
+              }
+              html += "</tr>";
+            }
+            html += "</tbody></table>";
+          }
+        }
+      }
+
+      // Notes
+      if (notes.length > 0) {
+        html += '<div class="benchmark-notes">';
+        html += "<h3>Analysis Notes</h3>";
+        html += "<ul>";
+        for (const note of notes) {
+          html += "<li>" + escapeHtml(note) + "</li>";
+        }
+        html += "</ul></div>";
+      }
+
+      container.innerHTML = html;
+    }
+
+    // ---- Start ----
+    init();
+    renderBenchmark();
+  </script>
+</body>
+</html>

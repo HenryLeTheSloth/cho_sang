@@ -1,0 +1,868 @@
+<!doctype html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Chợ Sáng: đi chợ sáng trong 3 phút</title>
+<meta name="description" content="Rau củ, trái cây, thịt cá, trứng sữa giao trong ngày. Giá, nguồn gốc, hạn dùng ghi rõ từng món.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Shantell+Sans:wght,INFM@500..800,0..100&family=Archivo:wdth,wght@75..125,400..800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --white: #ffffff;
+    --ground: #eef0ee;        /* nền chợ buổi sáng: xi măng sáng, lạnh */
+    --kraft: #c9a27a;         /* bìa carton */
+    --kraft-deep: #a98258;    /* mép carton, bóng */
+    --kraft-pale: #e2c9a8;    /* lớp giấy bên trong khi xé */
+    --ink: #1f1e1c;           /* mực bút lông */
+    --ink-soft: #4a3a28;      /* chữ phụ trên carton */
+    --ink-muted: #565a57;     /* chữ phụ trên nền trắng/xám */
+    --line: #d5d8d5;
+    --highlight: #f2c200;     /* bút dạ quang: chỉ cho hành động kế tiếp */
+    --highlight-press: #d9ad00;
+    --fresh: #2e7d32;         /* chỉ một nghĩa: còn hàng */
+    --red-marker: #9e1b14;    /* giá đã sửa */
+
+    --marker: "Shantell Sans", "Archivo", ui-sans-serif, sans-serif;
+    --print: "Archivo", ui-sans-serif, system-ui, sans-serif;
+    --ease: cubic-bezier(0.16, 1, 0.3, 1);
+    --spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* bảng/thẻ treo: lắc nhẹ rồi đứng */
+    --note-yellow: #fde89c;
+    --note-pink: #f8d2cb;
+    --note-blue: #d3e5f0;
+    --torn: polygon(0% 0.5%, 3.8% 0.2%, 7.7% 1%, 11.5% 0.1%, 15.4% 0.9%, 19.2% 0.6%, 23.1% 0.1%, 26.9% 0.8%, 30.8% 0.1%, 34.6% 0.7%, 38.5% 0.1%, 42.3% 0.1%, 46.2% 0.7%, 50% 1.3%, 53.8% 0.2%, 57.7% 0.4%, 61.5% 1%, 65.4% 1.5%, 69.2% 0.9%, 73.1% 0.6%, 76.9% 1.6%, 80.8% 0.1%, 84.6% 1.4%, 88.5% 0.5%, 92.3% 0.2%, 96.2% 0.2%, 100% 0.5%, 100% 98.7%, 96.2% 99.7%, 92.3% 99.1%, 88.5% 99%, 84.6% 99.4%, 80.8% 99.1%, 76.9% 99.9%, 73.1% 99.9%, 69.2% 99.7%, 65.4% 98.9%, 61.5% 99.3%, 57.7% 99.5%, 53.8% 99.1%, 50% 99.3%, 46.2% 99.5%, 42.3% 98.7%, 38.5% 98.9%, 34.6% 99.6%, 30.8% 99.1%, 26.9% 99.2%, 23.1% 98.6%, 19.2% 98.8%, 15.4% 99.5%, 11.5% 98.4%, 7.7% 99.8%, 3.8% 99.3%, 0% 98.8%);
+  }
+
+  *, *::before, *::after { box-sizing: border-box; }
+  html { color-scheme: light; scrollbar-gutter: stable; -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background: var(--ground);
+    color: var(--ink);
+    font: 400 1rem/1.55 var(--print);
+    font-variation-settings: "wdth" 100;
+    -webkit-font-smoothing: antialiased;
+  }
+  ::selection { background: var(--highlight); color: var(--ink); }
+  :focus-visible { outline: 3px solid var(--ink); outline-offset: 3px; border-radius: 4px; }
+  img { display: block; max-width: 100%; height: auto; }
+  a { color: inherit; }
+  h1, h2, h3 { margin: 0; line-height: 1.2; text-wrap: balance; } /* ≥1.15: dấu chồng ẫ ặ ộ không bị cắt */
+  p { margin: 0; }
+  ul, ol, dl, dd { margin: 0; padding: 0; list-style: none; }
+  .wrap { width: min(100% - 32px, 1200px); margin-inline: auto; }
+  .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); white-space: nowrap; }
+  .num { font-variant-numeric: tabular-nums; }
+  svg.i { width: 22px; height: 22px; flex: none; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+
+  /* Chữ bút lông */
+  .marker { font-family: var(--marker); font-weight: 800; font-variation-settings: "INFM" 60; letter-spacing: -0.01em; }
+
+  /* Bìa carton: mặt phẳng màu kraft, mép xé */
+  .carton { background: var(--kraft); clip-path: var(--torn); }
+  .carton-shadow { filter: drop-shadow(0 10px 14px rgb(60 40 15 / 0.22)) drop-shadow(0 2px 3px rgb(60 40 15 / 0.18)); }
+
+  /* Nút bút dạ quang */
+  .btn-hl {
+    display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+    min-height: 52px; padding: 0 26px;
+    background: var(--highlight); color: var(--ink);
+    font: 800 1.15rem/1 var(--marker); font-variation-settings: "INFM" 60;
+    text-decoration: none; border-radius: 999px; border: 2px solid var(--ink);
+    position: relative; overflow: hidden; isolation: isolate;
+    box-shadow: 0 2px 4px rgb(31 30 28 / 0.12);
+    transition: transform 380ms var(--spring), box-shadow 300ms var(--ease);
+  }
+  /* Rê chuột: thêm một nét dạ quang quét từ trái sang, nút nghiêng như được kẹp lên */
+  .btn-hl::before {
+    content: ""; position: absolute; inset: -2px; z-index: -1;
+    background: var(--highlight-press);
+    transform: scaleX(0); transform-origin: left;
+    transition: transform 380ms var(--ease);
+  }
+  .btn-hl:hover { transform: translateY(-3px) rotate(-1.5deg); box-shadow: 0 10px 18px -6px rgb(31 30 28 / 0.35); }
+  .btn-hl:hover::before { transform: scaleX(1); }
+  .btn-hl:active { transform: translateY(0) rotate(0) scale(0.97); box-shadow: 0 1px 2px rgb(31 30 28 / 0.2); transition-duration: 90ms; }
+
+  /* Link chữ: nét dạ quang tô nửa dưới chữ, quét từ trái sang */
+  .hl {
+    text-decoration: none;
+    background: linear-gradient(var(--highlight), var(--highlight)) no-repeat 0 88% / 0% 42%;
+    transition: background-size 360ms var(--ease);
+  }
+  .hl:hover, .hl:focus-visible { background-size: 100% 42%; }
+  /* Link cao 44px để dễ bấm: phần đệm lo vùng bấm, nét dạ quang chỉ nằm trong dòng chữ */
+  .site-footer .hl, .cats-nav .hl {
+    display: inline-block; min-height: 0; padding-block: 11px; line-height: 22px;
+    background-origin: content-box; background-clip: content-box;
+    background-position: 0 90%; background-size: 0% 36%;
+  }
+  .site-footer .hl:hover, .site-footer .hl:focus-visible,
+  .cats-nav .hl:hover, .cats-nav .hl:focus-visible { background-size: 100% 36%; }
+
+  .add {
+    display: inline-flex; align-items: center; justify-content: center;
+    width: 44px; height: 44px; border-radius: 999px; border: 0;
+    background: var(--ink); color: var(--white); cursor: pointer;
+    transition: transform 380ms var(--spring), background-color 200ms var(--ease), color 200ms var(--ease), box-shadow 200ms var(--ease);
+  }
+  .add svg.i { width: 20px; height: 20px; stroke-width: 2.6; transition: transform 420ms var(--spring); }
+  .add:hover { background: var(--highlight); color: var(--ink); transform: scale(1.1); box-shadow: inset 0 0 0 2px var(--ink); }
+  .add:hover svg.i { transform: rotate(90deg); }
+  .add:active { transform: scale(0.92); transition-duration: 90ms; }
+  .add[disabled] { background: var(--line); color: var(--ink-muted); cursor: not-allowed; transform: none; box-shadow: none; }
+  .add[disabled] svg.i { transform: none; }
+  .add.is-added { background: var(--highlight); color: var(--ink); }
+
+  /* ---------- Header ---------- */
+  .site-header {
+    position: sticky; top: 0; z-index: 30;
+    background: var(--white);
+    border-bottom: 1px solid var(--line);
+  }
+  .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 8px; padding: 8px 0 10px; }
+  .bar .logo { margin-right: auto; }
+  .bar .search { order: 3; flex-basis: 100%; }
+  .logo {
+    flex: none; display: inline-flex; align-items: center; min-height: 44px; padding: 4px 14px 6px;
+    background: var(--kraft); color: var(--ink); text-decoration: none;
+    font-size: 1.45rem; line-height: 1.2; transform: rotate(-2deg);
+    clip-path: polygon(2% 6%, 30% 0%, 64% 5%, 98% 1%, 100% 52%, 97% 96%, 62% 100%, 28% 94%, 1% 100%, 0% 50%);
+    transition: transform 450ms var(--spring), background-color 200ms var(--ease);
+  }
+  .logo:hover { transform: rotate(1.5deg) scale(1.04); background: var(--highlight); }
+  .search { position: relative; flex: 1; min-width: 0; }
+  .search svg { position: absolute; left: 14px; top: 50%; translate: 0 -50%; color: var(--ink-muted); pointer-events: none; }
+  .search input {
+    width: 100%; height: 48px; padding: 0 16px 0 46px;
+    font: 400 1rem var(--print); color: var(--ink);
+    background: var(--ground); border: 2px solid transparent; border-radius: 999px;
+    transition: border-color 150ms var(--ease), background-color 150ms var(--ease);
+  }
+  .search input::placeholder { color: var(--ink-muted); }
+  .search input:hover { border-color: var(--line); }
+  .search input:focus { outline: none; border-color: var(--ink); background: var(--white); }
+  .icon-btn {
+    position: relative; flex: none; display: inline-flex; align-items: center; justify-content: center;
+    width: 44px; height: 44px; border-radius: 999px; border: 0; background: transparent; color: var(--ink);
+    cursor: pointer; text-decoration: none; transition: background-color 150ms var(--ease);
+  }
+  .icon-btn::before {
+    content: ""; position: absolute; inset: 0; border-radius: inherit; background: var(--highlight);
+    transform: scale(0); transition: transform 320ms var(--spring);
+  }
+  .icon-btn:hover::before { transform: scale(1); }
+  .icon-btn svg.i { position: relative; width: 26px; height: 26px; }
+  .icon-btn:hover svg.i { animation: jiggle 420ms var(--ease); }
+  @keyframes jiggle { 25% { transform: rotate(-12deg); } 60% { transform: rotate(8deg); } }
+  .badge {
+    position: absolute; top: 0; right: -2px; min-width: 22px; height: 22px; padding: 0 5px;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--highlight); color: var(--ink); border: 2px solid var(--white); border-radius: 999px;
+    font: 800 0.75rem/1 var(--print);
+  }
+  .badge[hidden] { display: none; }
+  .bump { animation: bump 220ms var(--ease); }
+  @keyframes bump { 50% { transform: scale(1.3); } }
+
+  .cats-nav { display: none; }
+  .freeship {
+    display: flex; align-items: center; gap: 10px; min-height: 40px;
+    background: var(--kraft); font-size: 0.95rem;
+  }
+  .freeship[hidden] { display: none; }
+  .freeship .meter { flex: 1; max-width: 220px; height: 8px; border-radius: 999px; background: var(--kraft-pale); overflow: hidden; }
+  .freeship .meter span { display: block; height: 100%; width: 0; background: var(--ink); border-radius: inherit; transition: width 400ms var(--ease); }
+  .freeship strong { font-weight: 800; }
+
+  /* ---------- Hero ---------- */
+  .hero { position: relative; padding: 20px 0 8px; overflow: clip; background: var(--white); }
+  .hero-grid { position: relative; display: grid; }
+  .sign-wrap { position: relative; z-index: 2; }
+  .sign {
+    position: relative;
+    padding: 30px 22px 28px;
+    transform: rotate(-1deg);
+    transform-origin: 50% 0;
+  }
+  .sign h1 { font-size: clamp(2.1rem, 8.4vw, 4.4rem); line-height: 1.12; max-width: 12ch; }
+  .sign .lede { margin-top: 12px; max-width: 38ch; color: var(--ink-soft); font-size: 1.02rem; }
+  .board { margin-top: 22px; border-top: 3px solid var(--ink); }
+  .board-head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; padding: 10px 0 4px; }
+  .board-head h2 { font-size: 1.35rem; }
+  .board-head span { font-size: 0.88rem; color: var(--ink-soft); }
+  .board li {
+    display: grid; grid-template-columns: minmax(0, 1fr) auto 44px; align-items: center; gap: 4px 12px;
+    padding: 10px 0; border-bottom: 2px dashed rgb(31 30 28 / 0.28);
+  }
+  .board .name { font-weight: 700; font-size: 1.02rem; line-height: 1.3; }
+  .board .from { display: block; font-size: 0.86rem; font-weight: 400; color: var(--ink-soft); }
+  .board .price { text-align: right; font-size: clamp(1.25rem, 5vw, 1.5rem); line-height: 1.1; white-space: nowrap; }
+  .board .unit { display: block; font: 400 0.8rem/1.3 var(--print); color: var(--ink-soft); }
+  .board s { text-decoration-color: var(--red-marker); text-decoration-thickness: 2px; }
+  .board .sale { color: var(--red-marker); }
+  .hero-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 20px; margin-top: 22px; }
+  .slot { display: inline-flex; align-items: center; gap: 8px; font-size: 0.95rem; color: var(--ink-soft); }
+  .slot strong { color: var(--ink); }
+
+  /* Kệ hàng: mỗi trang trượt là một món, nghiêng theo chuột như cầm lên xem */
+  .shelf { position: relative; min-width: 0; margin-top: 36px; }
+  .shelf-head { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+  .shelf-head h2 { font-size: 1.5rem; }
+  .shelf-count { font-weight: 700; color: var(--ink-muted); }
+  .track {
+    display: grid; grid-auto-flow: column; grid-auto-columns: 82%; gap: 14px;
+    overflow-x: auto; overscroll-behavior-x: contain; scroll-snap-type: x mandatory; scroll-behavior: smooth;
+    scrollbar-width: none; padding: 18px 2px 6px; margin-top: 4px;
+  }
+  .track::-webkit-scrollbar { display: none; }
+  .slide { scroll-snap-align: start; }
+  .model { position: relative; display: grid; justify-items: center; text-align: center; padding: 8px 8px 4px; border-radius: 16px; }
+  .m-obj {
+    position: relative; display: grid; place-items: center; width: 100%; height: 230px;
+    border-bottom: 3px solid var(--ink); /* mép kệ */
+    perspective: 700px;
+  }
+  .m-obj::after { /* bóng món trên mặt kệ */
+    content: ""; position: absolute; bottom: -1px; left: 50%; width: 62%; height: 18px; translate: -50% 50%;
+    background: radial-gradient(closest-side, rgb(31 30 28 / 0.28), transparent);
+    transition: width 400ms var(--ease), opacity 400ms var(--ease);
+  }
+  .m-obj img {
+    max-height: 200px; width: auto; max-width: 92%; object-fit: contain;
+    transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(var(--lift, 0px)) scale(var(--s, 1));
+    transition: transform 500ms var(--spring);
+    filter: drop-shadow(0 6px 8px rgb(31 30 28 / 0.18));
+    will-change: transform;
+  }
+  .model.is-tilting .m-obj img { transition-duration: 120ms; transition-timing-function: linear; }
+  .model:hover .m-obj img, .model:focus-within .m-obj img { --lift: -14px; --s: 1.06; }
+  .model:hover .m-obj::after, .model:focus-within .m-obj::after { width: 48%; opacity: 0.7; }
+  .m-name { margin-top: 14px; font: 700 1.05rem/1.3 var(--print); }
+  .m-from { font-size: 0.88rem; color: var(--ink-muted); }
+  .m-price {
+    position: absolute; z-index: 2; top: 0; left: 4px; text-align: left;
+    padding: 6px 14px 8px; background: var(--kraft); font-size: 1.6rem; line-height: 1.05;
+    clip-path: polygon(0 6%, 40% 0, 100% 4%, 99% 96%, 55% 100%, 1% 94%);
+    transform-origin: 20% 0;
+    opacity: 0; rotate: -14deg; translate: -6px -8px;
+    transition: opacity 200ms var(--ease), rotate 600ms var(--spring), translate 450ms var(--spring);
+  }
+  .m-price small { display: block; font: 400 0.8rem/1.3 var(--print); color: var(--ink-soft); }
+  .m-price s { text-decoration-color: var(--red-marker); text-decoration-thickness: 2px; }
+  .m-add {
+    margin-top: 12px; min-height: 46px; padding: 0 22px; border-radius: 999px; border: 2px solid var(--ink);
+    display: inline-flex; align-items: center; gap: 8px; cursor: pointer;
+    background: var(--ink); color: var(--white); font: 700 0.98rem/1 var(--print);
+    opacity: 0; translate: 0 10px;
+    transition: opacity 220ms var(--ease), translate 450ms var(--spring), background-color 200ms var(--ease), color 200ms var(--ease);
+  }
+  .m-add svg.i { width: 18px; height: 18px; stroke-width: 2.6; transition: transform 420ms var(--spring); }
+  .m-add:hover { background: var(--highlight); color: var(--ink); }
+  .m-add:hover svg.i { transform: rotate(90deg); }
+  .m-add.is-added { background: var(--highlight); color: var(--ink); }
+  .model:hover .m-price, .model:focus-within .m-price { opacity: 1; rotate: -4deg; translate: 0 0; }
+  .model:hover .m-add, .model:focus-within .m-add { opacity: 1; translate: 0 0; }
+  @media (hover: none) { /* màn cảm ứng: không có hover, luôn hiện giá và nút */
+    .m-price { opacity: 1; rotate: -4deg; translate: 0 0; }
+    .m-add { opacity: 1; translate: 0 0; }
+  }
+  .shelf-nav { display: flex; gap: 10px; margin-top: 10px; }
+  .nav-btn {
+    display: inline-flex; align-items: center; justify-content: center; width: 48px; height: 48px;
+    border-radius: 999px; border: 2px solid var(--ink); background: var(--white); color: var(--ink); cursor: pointer;
+    transition: background-color 200ms var(--ease), color 200ms var(--ease), transform 380ms var(--spring), opacity 200ms;
+  }
+  .nav-btn svg.i { transition: transform 380ms var(--spring); }
+  .nav-btn:hover { background: var(--ink); color: var(--white); transform: scale(1.06); }
+  .nav-btn[data-dir="-1"]:hover svg.i { transform: translateX(-3px); }
+  .nav-btn[data-dir="1"]:hover svg.i { transform: translateX(3px); }
+  .nav-btn:active { transform: scale(0.94); transition-duration: 90ms; }
+  .nav-btn:disabled { opacity: 0.35; cursor: default; background: var(--white); color: var(--ink); transform: none; }
+  .nav-btn:disabled svg.i { transform: none; }
+
+  /* Lời hứa: một dải carton dài, ba lời hứa đọc liền */
+  /* Lời hứa: ba tờ giấy note dán cạnh tấm bảng */
+  .promise { background: var(--white); padding: 36px 0 48px; }
+  .promise ul { display: grid; gap: 18px; }
+  .note {
+    position: relative; padding: 26px 22px 28px;
+    background: var(--note-yellow);
+    box-shadow: inset 0 26px 0 rgb(31 30 28 / 0.035), 0 1px 1px rgb(60 40 15 / 0.1), 0 14px 16px -12px rgb(60 40 15 / 0.45);
+    border-bottom-right-radius: 28px 6px; /* góc dưới hơi cong lên */
+  }
+  .note:nth-child(1) { rotate: -1.5deg; }
+  .note:nth-child(2) { background: var(--note-pink); rotate: 1deg; }
+  .note:nth-child(3) { background: var(--note-blue); rotate: -0.6deg; }
+  .note svg.i { width: 26px; height: 26px; }
+  .note h3 { margin-top: 10px; font-size: 1.3rem; line-height: 1.25; }
+  .note p { margin-top: 6px; color: var(--ink-soft); font-size: 0.95rem; }
+
+  /* ---------- Sections ---------- */
+  section.block { padding: 48px 0; }
+  .sec-head { display: flex; align-items: baseline; justify-content: space-between; gap: 16px; margin-bottom: 20px; }
+  .sec-head h2 { font-size: clamp(1.7rem, 5vw, 2.5rem); }
+  .sec-head a { display: inline-flex; align-items: center; gap: 6px; min-height: 44px; font-weight: 700; }
+  .sec-head a svg.i { width: 18px; height: 18px; transition: transform 300ms var(--spring); }
+  .sec-head a:hover svg.i { transform: translateX(4px); }
+  .sec-sub { margin: -10px 0 22px; max-width: 60ch; color: var(--ink-muted); }
+
+  /* Danh mục: ảnh + nhãn bìa */
+  .cats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
+  .cats a { position: relative; display: block; text-decoration: none; border-radius: 14px; overflow: hidden; }
+  .cats img { aspect-ratio: 1; width: 100%; object-fit: cover; transition: transform 600ms var(--ease), filter 300ms var(--ease); }
+  .cats a:hover img { transform: scale(1.07); filter: saturate(1.15); }
+  .cats .tag {
+    position: absolute; left: 8px; bottom: 8px; right: 8px; width: fit-content; max-width: calc(100% - 16px);
+    padding: 4px 10px 6px; background: var(--kraft); font-size: 1rem; line-height: 1.2;
+    clip-path: polygon(0 4%, 50% 0, 100% 6%, 98% 100%, 45% 95%, 2% 100%);
+    transform-origin: 12% 0;
+    transition: rotate 500ms var(--spring), translate 400ms var(--spring), background-color 200ms var(--ease);
+  }
+  .cats li:nth-child(odd) .tag { rotate: -2deg; }
+  .cats li:nth-child(even) .tag { rotate: 1.5deg; }
+  .cats a:hover .tag { background: var(--highlight); rotate: 3deg; translate: 0 -4px; }
+  .cats li:nth-child(even) a:hover .tag { rotate: -3deg; }
+
+  /* Đọc một bảng giá: khối tin cậy */
+  .trust { background: var(--white); }
+  .anatomy { display: grid; gap: 28px; align-items: start; }
+  .anatomy-photo { position: relative; }
+  .anatomy-photo img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 16px; }
+  .anatomy-photo .sign-sm {
+    position: absolute; left: 14px; bottom: -22px; width: min(78%, 330px);
+    padding: 18px 18px 16px; transform: rotate(-2.5deg);
+  }
+  .sign-sm h3 { font-size: 1.45rem; line-height: 1.2; }
+  .sign-sm .p { margin-top: 6px; font-size: 2.3rem; line-height: 1; }
+  .sign-sm .p small { font: 400 0.95rem var(--print); color: var(--ink-soft); }
+  .sign-sm .was { margin-top: 4px; font-size: 0.95rem; color: var(--ink-soft); }
+  .sign-sm .was s { text-decoration-color: var(--red-marker); text-decoration-thickness: 2px; }
+  .facts { display: grid; gap: 0; border-top: 3px solid var(--ink); }
+  .facts div { display: grid; grid-template-columns: 9.5rem 1fr; gap: 12px; padding: 14px 0; border-bottom: 1px solid var(--line); }
+  .facts dt { font-weight: 800; }
+  .facts dd { color: var(--ink); }
+  .facts dd small { display: block; color: var(--ink-muted); font-size: 0.9rem; }
+  .facts .swap { margin-top: 18px; padding: 16px 18px; border-radius: 14px; background: var(--ground); display: flex; gap: 12px; align-items: flex-start; }
+  .facts .swap b { display: block; }
+
+  /* Thẻ sản phẩm */
+  .grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 28px 12px; }
+  .card { position: relative; display: flex; flex-direction: column; height: 100%; }
+  .card .ph { position: relative; }
+  .card .ph img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 14px; background: var(--white); }
+  .card .ph .off {
+    position: absolute; top: 8px; right: 8px; padding: 3px 9px; border-radius: 999px;
+    background: var(--highlight); font: 800 0.85rem/1.3 var(--print);
+  }
+  .card .tag-price {
+    position: absolute; left: 6px; bottom: -14px; padding: 4px 12px 6px;
+    background: var(--kraft); font-size: 1.3rem; line-height: 1.15;
+    clip-path: polygon(0 6%, 40% 0, 100% 4%, 99% 96%, 55% 100%, 1% 94%);
+    transform-origin: 15% 0;
+    transition: rotate 550ms var(--spring), translate 400ms var(--spring), background-color 200ms var(--ease);
+  }
+  .card .ph img { transition: transform 500ms var(--ease); }
+  .card:hover .ph img { transform: translateY(-4px); }
+  .card:hover .tag-price { rotate: 4deg; translate: 0 -2px; background: var(--highlight); }
+  .card h3 a { background: linear-gradient(var(--highlight), var(--highlight)) no-repeat 0 88% / 0% 42%; transition: background-size 360ms var(--ease); }
+  .card:hover h3 a { background-size: 100% 42%; }
+  .grid li:nth-child(3n+1) .tag-price { rotate: -3deg; }
+  .grid li:nth-child(3n+2) .tag-price { rotate: 2deg; }
+  .grid li:nth-child(3n) .tag-price { rotate: -1deg; }
+  .card .body { display: flex; flex-direction: column; gap: 3px; flex: 1; padding-top: 24px; }
+  .card h3 { font: 700 1rem/1.35 var(--print); }
+  .card h3 a { text-decoration: none; }
+  .card.is-out:hover .tag-price { background: var(--kraft); rotate: 0deg; }
+  .card h3 a::after { content: ""; position: absolute; inset: 0; border-radius: 14px; }
+  .card h3 a:focus-visible { outline: none; }
+  .card h3 a:focus-visible::after { outline: 3px solid var(--ink); outline-offset: 3px; }
+  .card .meta { font-size: 0.86rem; color: var(--ink-muted); line-height: 1.4; }
+  .card .foot { display: flex; align-items: flex-end; justify-content: space-between; gap: 8px; margin-top: auto; padding-top: 8px; }
+  .card .stock { font-size: 0.86rem; font-weight: 700; color: var(--fresh); }
+  .card .stock.low { color: var(--ink); }
+  .card .stock.out { color: var(--ink-muted); font-weight: 400; }
+  .card .perkg { display: block; font-size: 0.82rem; color: var(--ink-muted); }
+  .card .perkg s { text-decoration-color: var(--red-marker); text-decoration-thickness: 2px; }
+  .card .add { position: relative; z-index: 2; }
+  .card.is-out img { filter: grayscale(1); opacity: 0.6; }
+
+  /* Giỏ quà */
+  .gift .carton { padding: 32px 22px; display: grid; gap: 24px; align-items: center; }
+  .gift h2 { font-size: clamp(1.9rem, 6vw, 3rem); }
+  .gift p { margin-top: 10px; max-width: 44ch; color: var(--ink-soft); }
+  .gift .btn-hl { margin-top: 20px; }
+  .gift .cutouts { display: flex; align-items: flex-end; justify-content: center; gap: 0; min-height: 150px; }
+  .gift .cutouts img { width: 25%; max-width: 150px; margin-inline: -2%; filter: drop-shadow(0 8px 10px rgb(60 40 15 / 0.3)); }
+  .gift .cutouts img:nth-child(2) { translate: 0 -12px; rotate: -6deg; }
+  .gift .cutouts img:nth-child(4) { translate: 0 -8px; rotate: 8deg; }
+
+  /* ---------- Footer ---------- */
+  .site-footer { margin-top: 24px; padding: 40px 0 28px; background: var(--ink); color: #e9e7e3; }
+  .site-footer .carton { color: var(--ink); padding: 28px 22px 26px; display: grid; gap: 28px; }
+  .foot-name { font-size: clamp(2.4rem, 9vw, 4.2rem); line-height: 1.1; }
+  .foot-tag { margin-top: 6px; color: var(--ink-soft); max-width: 34ch; }
+  .foot-cols { display: grid; gap: 22px; }
+  .foot-cols h3 { font: 800 1rem/1.3 var(--print); margin-bottom: 6px; }
+  .foot-cols li { font-size: 0.95rem; }
+  .foot-cols a { display: inline-flex; align-items: center; min-height: 44px; }
+  .slots { display: flex; flex-wrap: wrap; gap: 6px; margin: 6px 0 8px; }
+  .slots li { padding: 3px 10px; border: 2px solid var(--ink); border-radius: 999px; font-weight: 700; font-size: 0.88rem; }
+  .legal { margin-top: 22px; font-size: 0.86rem; color: #b9b6b0; display: grid; gap: 4px; }
+
+  /* Khoảnh khắc duy nhất: tấm bảng được treo lên khi tải trang */
+  @media (prefers-reduced-motion: no-preference) {
+    .sign { animation: hang 900ms var(--ease) both; }
+    @keyframes hang {
+      0% { transform: rotate(-4deg) translateY(-14px); }
+      55% { transform: rotate(0.4deg); }
+      100% { transform: rotate(-1deg); }
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation: none !important; transition-duration: 1ms !important; scroll-behavior: auto !important; }
+  }
+
+  /* ---------- ≥ 720px ---------- */
+  @media (min-width: 720px) {
+    .bar { flex-wrap: nowrap; gap: 18px; min-height: 76px; padding: 0; }
+    .bar .logo { margin-right: 0; }
+    .bar .search { order: 0; flex-basis: auto; }
+    .logo { font-size: 1.7rem; padding: 4px 18px 8px; }
+    .cats-nav { display: flex; gap: 4px; overflow-x: auto; padding-bottom: 6px; scrollbar-width: none; }
+    .cats-nav a { margin: 0 10px; font-weight: 600; white-space: nowrap; }
+    .hero { padding: 36px 0 12px; }
+    .sign { padding: 44px 40px 40px; }
+    .track { grid-auto-columns: 46%; }
+    .promise ul { grid-template-columns: repeat(3, 1fr); gap: 28px; }
+    .cats { grid-template-columns: repeat(6, 1fr); gap: 16px; }
+    .grid { grid-template-columns: repeat(4, 1fr); gap: 36px 20px; }
+    .gift .carton { grid-template-columns: 1.1fr 1fr; padding: 48px 44px; }
+    .site-footer .carton { grid-template-columns: 1fr 1.6fr; padding: 44px 40px; }
+    .foot-cols { grid-template-columns: repeat(3, 1fr); }
+  }
+  @media (min-width: 1000px) {
+    .hero-grid { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); align-items: center; }
+    .hero-grid { gap: 48px; }
+    .shelf { margin-top: 0; }
+    .track { grid-auto-columns: 100%; }
+    .m-obj { height: 300px; }
+    .m-obj img { max-height: 270px; }
+    .anatomy { grid-template-columns: 1fr 1fr; gap: 56px; }
+    .anatomy-photo .sign-sm { left: auto; right: -28px; bottom: 28px; }
+  }
+</style>
+</head>
+<body>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <symbol id="i-search" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></symbol>
+  <symbol id="i-basket" viewBox="0 0 24 24"><path d="m15 11-1 9"/><path d="m19 11-4-7"/><path d="M2 11h20"/><path d="m3.5 11 1.6 7.4a2 2 0 0 0 2 1.6h9.8a2 2 0 0 0 2-1.6l1.7-7.4"/><path d="M4.5 15.5h15"/><path d="m5 11 4-7"/><path d="m9 11 1 9"/></symbol>
+  <symbol id="i-user" viewBox="0 0 24 24"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 0 0-16 0"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="M12 5v14"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24"><path d="M20 6 9 17l-5-5"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></symbol>
+  <symbol id="i-truck" viewBox="0 0 24 24"><path d="M14 18V6a2 2 0 0 0-2-2H4a2 2 0 0 0-2 2v11a1 1 0 0 0 1 1h2"/><path d="M15 18H9"/><path d="M19 18h2a1 1 0 0 0 1-1v-3.65a1 1 0 0 0-.22-.624l-3.48-4.35A1 1 0 0 0 17.52 8H14"/><circle cx="17" cy="18" r="2"/><circle cx="7" cy="18" r="2"/></symbol>
+  <symbol id="i-swap" viewBox="0 0 24 24"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24"><path d="M20 10c0 4.99-5.54 10.19-7.4 11.8a1 1 0 0 1-1.2 0C9.54 20.19 4 14.99 4 10a8 8 0 0 1 16 0"/><circle cx="12" cy="10" r="3"/></symbol>
+  <symbol id="i-left" viewBox="0 0 24 24"><path d="m15 18-6-6 6-6"/></symbol>
+  <symbol id="i-right" viewBox="0 0 24 24"><path d="m9 18 6-6-6-6"/></symbol>
+  <symbol id="i-arrow" viewBox="0 0 24 24"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></symbol>
+  <symbol id="i-wallet" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="14" rx="2"/><path d="M2 10h20"/><path d="M6 15h4"/></symbol>
+</svg>
+
+<header class="site-header">
+  <div class="wrap bar">
+    <a class="logo marker" href="#" aria-label="Chợ Sáng, trang chủ">Chợ Sáng</a>
+    <form class="search" role="search" action="#" onsubmit="return false">
+      <label for="q" class="sr-only">Tìm sản phẩm</label>
+      <svg class="i" aria-hidden="true"><use href="#i-search"/></svg>
+      <input id="q" name="q" type="search" placeholder="Tìm món, gõ không dấu cũng ra" autocomplete="off" enterkeyhint="search">
+    </form>
+    <a class="icon-btn" href="#" aria-label="Đăng nhập"><svg class="i" aria-hidden="true"><use href="#i-user"/></svg></a>
+    <button class="icon-btn" id="cart" type="button" aria-label="Giỏ hàng, 0 món">
+      <svg class="i" aria-hidden="true"><use href="#i-basket"/></svg>
+      <span class="badge num" id="badge" hidden>0</span>
+    </button>
+  </div>
+  <nav class="wrap cats-nav" aria-label="Danh mục">
+    <a class="hl" href="#">Rau củ</a><a class="hl" href="#">Trái cây</a><a class="hl" href="#">Thịt cá</a><a class="hl" href="#">Trứng &amp; sữa</a><a class="hl" href="#">Bánh mì &amp; đồ khô</a><a class="hl" href="#">Gia vị</a><a class="hl" href="#">Giỏ quà biếu</a>
+  </nav>
+  <div class="freeship" id="freeship" hidden>
+    <div class="wrap" style="display:flex;align-items:center;gap:12px">
+      <p id="fs-text" class="num" aria-live="polite"></p>
+      <div class="meter" aria-hidden="true"><span id="fs-bar"></span></div>
+    </div>
+  </div>
+</header>
+
+<main>
+  <!-- HERO: tấm bảng giá bìa dựa vào rổ hàng -->
+  <section class="hero" aria-labelledby="hero-title">
+    <div class="wrap hero-grid">
+      <div class="sign-wrap carton-shadow">
+        <div class="sign carton">
+          <h1 id="hero-title" class="marker">Đi chợ sáng trong 3 phút</h1>
+          <p class="lede">Rau củ, trái cây, thịt cá, trứng sữa. Món nào cũng ghi rõ giá, nguồn gốc và hạn dùng. Hỏng, dập đổi trong 24 giờ.</p>
+
+          <div class="board">
+            <div class="board-head">
+              <h2 class="marker">Giá sáng nay</h2>
+              <span class="num" id="today">Thứ Sáu, 16/10</span>
+            </div>
+            <ul>
+              <li>
+                <span class="name">Cải ngọt VietGAP<span class="from">Đà Lạt</span></span>
+                <span class="price marker num">18.000₫<span class="unit">bó ~300g</span></span>
+                <button class="add" type="button" data-price="18000" aria-label="Thêm Cải ngọt VietGAP vào giỏ"><svg class="i" aria-hidden="true"><use href="#i-plus"/></svg></button>
+              </li>
+              <li>
+                <span class="name">Xoài cát Hòa Lộc<span class="from">Cái Bè, Tiền Giang</span></span>
+                <span class="price marker num"><span class="sale">85.000₫</span><span class="unit">túi ~1kg</span><span class="unit">giá cũ <s>99.000₫</s></span></span>
+                <button class="add" type="button" data-price="85000" aria-label="Thêm Xoài cát Hòa Lộc vào giỏ"><svg class="i" aria-hidden="true"><use href="#i-plus"/></svg></button>
+              </li>
+              <li>
+                <span class="name">Trứng gà ta<span class="from">Trảng Bom, Đồng Nai</span></span>
+                <span class="price marker num">39.000₫<span class="unit">hộp 10 quả</span></span>
+                <button class="add" type="button" data-price="39000" aria-label="Thêm Trứng gà ta vào giỏ"><svg class="i" aria-hidden="true"><use href="#i-plus"/></svg></button>
+              </li>
+              <li>
+                <span class="name">Cá hồi phi lê<span class="from">Nhập khẩu Na Uy</span></span>
+                <span class="price marker num"><span class="sale">159.000₫</span><span class="unit">khay ~300g</span><span class="unit">giá cũ <s>179.000₫</s></span></span>
+                <button class="add" type="button" data-price="159000" aria-label="Thêm Cá hồi phi lê vào giỏ"><svg class="i" aria-hidden="true"><use href="#i-plus"/></svg></button>
+              </li>
+            </ul>
+          </div>
+
+          <div class="hero-actions">
+            <a class="btn-hl" href="#">Đi chợ ngay</a>
+            <p class="slot"><svg class="i" aria-hidden="true"><use href="#i-clock"/></svg><span>Giao sớm nhất <strong class="num">10:00–12:00</strong> hôm nay</span></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Kệ hàng thay rổ 3D: mỗi trang một món, nghiêng theo chuột -->
+      <div class="shelf" aria-roledescription="carousel" aria-labelledby="shelf-title">
+        <div class="shelf-head">
+          <h2 id="shelf-title" class="marker">Mới lên kệ</h2>
+          <p class="shelf-count num" aria-live="polite"><span id="sl-i">1</span> / 8</p>
+        </div>
+        <ul class="track" id="track">
+          <li class="slide" aria-roledescription="slide" aria-label="1 / 8">
+            <article class="model">
+              <p class="m-price marker num">85.000₫<small>túi ~1kg, giá cũ <s>99.000₫</s></small></p>
+              <div class="m-obj"><img src="../../uploads/products/xoai-cat-hoa-loc-cutout.webp" alt="Xoài cát Hòa Lộc" loading="eager"></div>
+              <h3 class="m-name">Xoài cát Hòa Lộc</h3>
+              <p class="m-from">Cái Bè, Tiền Giang</p>
+              <button class="m-add" type="button" data-price="85000"><svg class="i" aria-hidden="true"><use href="#i-plus"/></svg><span>Thêm vào giỏ</span></button>
+            </article>
+          </li>
+          <li class="slide" aria-roledescription="slide" aria-label="2 / 8">
+            <article class="model">
+              <p class="m-price marker num">69.000₫<small>túi ~1kg</small></p>
+              <div class="m-obj"><img src="../../uploads/products/bo-034-cutout.webp" alt="Bơ 034" loading="eager"></div>
+              <h3 class="m-name">Bơ 034</h3>
+              <p class="m-from">Krông Pắc, Đắk Lắk</p>
+              <button class="m-add" type="button" data-price="69000"><svg class="i" aria-hidden="true"><use href="#i-plus"/></svg><span>Thêm vào giỏ</span></button>
+            </article>
+          </li>
+          <li class="slide" aria-roledescription="slide" aria-label="3 / 8">
+            <article class="model">
+              <p class="m-price marker num">39.000₫<small>túi ~1kg</small></p>
+              <div class="m-obj"><img src="../../uploads/products/cam-sanh-cutout.webp" alt="Cam sành" loading="lazy"></div>
+              <h3 class="m-name">Cam sành</h3>
+              <p class="m-from">Tam Bình, Vĩnh Long</p>
+              <button class="m-add" type="button" data-price="39000"><svg class="i" aria-hidden="true"><use href="#i-plus"/></svg><span>Thêm vào giỏ</span></button>
+            </article>
+          </li>
+          <li class="slide" aria-roledescription="slide" aria-label="4 / 8">
+            <article class="model">
+              <p class="m-price marker num">32.000₫<small>nải ~1kg</small></p>
+              <div class="m-obj"><img src="../../uploads/products/chuoi-gia-cutout.webp" alt="Chuối già Nam Mỹ" loading="lazy"></div>
+              <h3 class="m-name">Chuối già Nam Mỹ</h3>
+              <p class="m-from">Đồng Nai</p>
+              <button class="m-add" type="button" data-price="32000"><svg class="i" aria-hidden="true"><use href="#i-plus"/></svg><span>Thêm vào giỏ</span></button>
+            </article>
+          </li>
+          <li class="slide" aria-roledescription="slide" aria-label="5 / 8">
+            <article class="model">
+              <p class="m-price marker num">39.000₫<small>hộp 10 quả</small></p>
+              <div class="m-obj"><img src="../../uploads/products/trung-ga-ta-cutout.webp" alt="Trứng gà ta" loading="lazy"></div>
+              <h3 class="m-name">Trứng gà ta</h3>
+              <p class="m-from">Trảng Bom, Đồng Nai</p>
+              <button class="m-add" type="button" data-price="39000"><svg class="i" aria-hidden="true"><use href="#i-plus"/></svg><span>Thêm vào giỏ</span></button>
+            </article>
+          </li>
+          <li class="slide" aria-roledescription="slide" aria-label="6 / 8">
+            <article class="model">
+              <p class="m-price marker num">25.000₫<small>gói 400g</small></p>
+              <div class="m-obj"><img src="../../uploads/products/banh-mi-sandwich-cutout.webp" alt="Bánh mì sandwich" loading="lazy"></div>
+              <h3 class="m-name">Bánh mì sandwich</h3>
+              <p class="m-from">TP.HCM</p>
+              <button class="m-add" type="button" data-price="25000"><svg class="i" aria-hidden="true"><use href="#i-plus"/></svg><span>Thêm vào giỏ</span></button>
+            </article>
+          </li>
+          <li class="slide" aria-roledescription="slide" aria-label="7 / 8">
+            <article class="model">
+              <p class="m-price marker num">59.000₫<small>chai 1L</small></p>
+              <div class="m-obj"><img src="../../uploads/products/dau-an-dau-nanh-cutout.webp" alt="Dầu ăn đậu nành" loading="lazy"></div>
+              <h3 class="m-name">Dầu ăn đậu nành</h3>
+              <p class="m-from">Việt Nam</p>
+              <button class="m-add" type="button" data-price="59000"><svg class="i" aria-hidden="true"><use href="#i-plus"/></svg><span>Thêm vào giỏ</span></button>
+            </article>
+          </li>
+          <li class="slide" aria-roledescription="slide" aria-label="8 / 8">
+            <article class="model">
+              <p class="m-price marker num">12.000₫<small>túi 100g</small></p>
+              <div class="m-obj"><img src="../../uploads/products/ot-hiem-cutout.webp" alt="Ớt hiểm" loading="lazy"></div>
+              <h3 class="m-name">Ớt hiểm</h3>
+              <p class="m-from">Chợ Gạo, Tiền Giang</p>
+              <button class="m-add" type="button" data-price="12000"><svg class="i" aria-hidden="true"><use href="#i-plus"/></svg><span>Thêm vào giỏ</span></button>
+            </article>
+          </li>
+        </ul>
+        <div class="shelf-nav">
+          <button class="nav-btn" type="button" data-dir="-1" aria-label="Món trước" aria-controls="track"><svg class="i" aria-hidden="true"><use href="#i-left"/></svg></button>
+          <button class="nav-btn" type="button" data-dir="1" aria-label="Món sau" aria-controls="track"><svg class="i" aria-hidden="true"><use href="#i-right"/></svg></button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="promise" aria-label="Cam kết giao hàng">
+    <ul class="wrap">
+      <li class="note"><svg class="i" aria-hidden="true"><use href="#i-truck"/></svg><h3 class="marker">Giao trong ngày theo khung giờ</h3><p>Phí ship 20.000₫, miễn phí cho đơn từ 300.000₫.</p></li>
+      <li class="note"><svg class="i" aria-hidden="true"><use href="#i-swap"/></svg><h3 class="marker">Hỏng, dập đổi trong 24 giờ</h3><p>Báo trong 24 giờ kể từ lúc nhận hàng.</p></li>
+      <li class="note"><svg class="i" aria-hidden="true"><use href="#i-wallet"/></svg><h3 class="marker">Nhận hàng rồi mới trả tiền</h3><p>Không cần tạo tài khoản để đặt.</p></li>
+    </ul>
+  </section>
+
+  <section class="block" aria-labelledby="cats-title">
+    <div class="wrap">
+      <div class="sec-head"><h2 id="cats-title" class="marker">Hôm nay mua gì?</h2></div>
+      <ul class="cats">
+        <li><a href="#"><img src="../../uploads/products/cai-ngot-640.webp" alt="" width="640" height="640" loading="lazy"><span class="tag marker">Rau củ</span></a></li>
+        <li><a href="#"><img src="../../uploads/products/xoai-cat-hoa-loc-640.webp" alt="" width="640" height="640" loading="lazy"><span class="tag marker">Trái cây</span></a></li>
+        <li><a href="#"><img src="../../uploads/products/ca-hoi-phi-le-640.webp" alt="" width="640" height="640" loading="lazy"><span class="tag marker">Thịt cá</span></a></li>
+        <li><a href="#"><img src="../../uploads/products/trung-ga-ta-640.webp" alt="" width="640" height="640" loading="lazy"><span class="tag marker">Trứng &amp; sữa</span></a></li>
+        <li><a href="#"><img src="../../uploads/products/gao-st25-640.webp" alt="" width="640" height="640" loading="lazy"><span class="tag marker">Bánh mì &amp; đồ khô</span></a></li>
+        <li><a href="#"><img src="../../uploads/products/ot-hiem-640.webp" alt="" width="640" height="640" loading="lazy"><span class="tag marker">Gia vị</span></a></li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- Khối tin cậy: một bảng giá đọc từng dòng -->
+  <section class="block trust" aria-labelledby="trust-title">
+    <div class="wrap">
+      <div class="sec-head"><h2 id="trust-title" class="marker">Món nào cũng có đủ bảng giá</h2></div>
+      <p class="sec-sub">Như bảng bìa cắm trên sạp, nhưng ghi đủ hơn. Bạn biết món từ đâu tới, để được bao lâu và giá theo ký trước khi bấm mua.</p>
+      <div class="anatomy">
+        <div class="anatomy-photo">
+          <img src="../../uploads/products/xoai-cat-hoa-loc-1080.webp" alt="Xoài cát Hòa Lộc" width="1080" height="1080" loading="lazy">
+          <div class="carton-shadow" style="position:absolute;inset:auto 0 0 0">
+            <div class="sign-sm carton">
+              <h3 class="marker">Xoài cát Hòa Lộc</h3>
+              <p class="p marker num">85.000₫ <small>túi ~1kg</small></p>
+              <p class="was num">Giá cũ <s>99.000₫</s></p>
+            </div>
+          </div>
+        </div>
+        <dl class="facts">
+          <div><dt>Nguồn gốc</dt><dd>Cái Bè, Tiền Giang</dd></div>
+          <div><dt>Giá theo ký</dt><dd class="num">Bằng giá bán (túi ~1kg)<small>Hàng cân ký: giá tạm tính, cân thực tế chênh tối đa 10%.</small></dd></div>
+          <div><dt>Hạn dùng</dt><dd>5 ngày</dd></div>
+          <div><dt>Bảo quản</dt><dd>Để nhiệt độ phòng cho chín, chín rồi cất ngăn mát.</dd></div>
+          <div><dt>Còn trong kho</dt><dd class="num">35 túi</dd></div>
+          <p class="swap"><svg class="i" aria-hidden="true"><use href="#i-swap"/></svg><span><b>Không như bảng ghi, chúng tôi đổi.</b>Trái dập, hư hoặc khác mô tả: báo trong 24 giờ kể từ lúc nhận.</span></p>
+        </dl>
+      </div>
+    </div>
+  </section>
+
+  <section class="block" aria-labelledby="deals-title">
+    <div class="wrap">
+      <div class="sec-head">
+        <h2 id="deals-title" class="marker">Giá tốt sáng nay</h2>
+        <a class="hl" href="#">Xem tất cả <svg class="i" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+      </div>
+      <ul class="grid">
+        <li><article class="card">
+          <div class="ph"><img src="../../uploads/products/ca-chua-bi-640.webp" alt="Cà chua bi" width="640" height="640" loading="lazy"><span class="off num">−18%</span><span class="tag-price marker num">32.000₫</span></div>
+          <div class="body"><h3><a href="#">Cà chua bi</a></h3><p class="meta">Hộp 300g<br>Đà Lạt</p>
+            <div class="foot"><p><span class="stock">Còn hàng</span><span class="perkg num">106.700₫/kg, <s>39.000₫</s></span></p><button class="add" type="button" data-price="32000" aria-label="Thêm Cà chua bi vào giỏ"><svg class="i" aria-hidden="true"><use href="#i-plus"/></svg></button></div></div>
+        </article></li>
+        <li><article class="card">
+          <div class="ph"><img src="../../uploads/products/xoai-cat-hoa-loc-640.webp" alt="Xoài cát Hòa Lộc" width="640" height="640" loading="lazy"><span class="off num">−14%</span><span class="tag-price marker num">85.000₫</span></div>
+          <div class="body"><h3><a href="#">Xoài cát Hòa Lộc</a></h3><p class="meta">Túi ~1kg<br>Cái Bè, Tiền Giang</p>
+            <div class="foot"><p><span class="stock">Còn hàng</span><span class="perkg num"><s>99.000₫</s></span></p><button class="add" type="button" data-price="85000" aria-label="Thêm Xoài cát Hòa Lộc vào giỏ"><svg class="i" aria-hidden="true"><use href="#i-plus"/></svg></button></div></div>
+        </article></li>
+        <li><article class="card">
+          <div class="ph"><img src="../../uploads/products/ca-hoi-phi-le-640.webp" alt="Cá hồi phi lê" width="640" height="640" loading="lazy"><span class="off num">−11%</span><span class="tag-price marker num">159.000₫</span></div>
+          <div class="body"><h3><a href="#">Cá hồi phi lê</a></h3><p class="meta">Khay ~300g<br>Nhập khẩu Na Uy</p>
+            <div class="foot"><p><span class="stock">Còn hàng</span><span class="perkg num">530.000₫/kg, <s>179.000₫</s></span></p><button class="add" type="button" data-price="159000" aria-label="Thêm Cá hồi phi lê vào giỏ"><svg class="i" aria-hidden="true"><use href="#i-plus"/></svg></button></div></div>
+        </article></li>
+        <li><article class="card">
+          <div class="ph"><img src="../../uploads/products/gao-st25-640.webp" alt="Gạo ST25" width="640" height="640" loading="lazy"><span class="off num">−10%</span><span class="tag-price marker num">189.000₫</span></div>
+          <div class="body"><h3><a href="#">Gạo ST25</a></h3><p class="meta">Túi 5kg<br>Sóc Trăng</p>
+            <div class="foot"><p><span class="stock">Còn hàng</span><span class="perkg num">37.800₫/kg, <s>210.000₫</s></span></p><button class="add" type="button" data-price="189000" aria-label="Thêm Gạo ST25 vào giỏ"><svg class="i" aria-hidden="true"><use href="#i-plus"/></svg></button></div></div>
+        </article></li>
+        <li><article class="card">
+          <div class="ph"><img src="../../uploads/products/cai-ngot-640.webp" alt="Cải ngọt VietGAP" width="640" height="640" loading="lazy"><span class="tag-price marker num">18.000₫</span></div>
+          <div class="body"><h3><a href="#">Cải ngọt VietGAP</a></h3><p class="meta">Bó ~300g<br>Đà Lạt, VietGAP</p>
+            <div class="foot"><p><span class="stock">Còn hàng</span><span class="perkg num">60.000₫/kg</span></p><button class="add" type="button" data-price="18000" aria-label="Thêm Cải ngọt VietGAP vào giỏ"><svg class="i" aria-hidden="true"><use href="#i-plus"/></svg></button></div></div>
+        </article></li>
+        <li><article class="card">
+          <div class="ph"><img src="../../uploads/products/trung-ga-ta-640.webp" alt="Trứng gà ta" width="640" height="640" loading="lazy"><span class="tag-price marker num">39.000₫</span></div>
+          <div class="body"><h3><a href="#">Trứng gà ta</a></h3><p class="meta">Hộp 10 quả<br>Trảng Bom, Đồng Nai</p>
+            <div class="foot"><p><span class="stock">Còn hàng</span></p><button class="add" type="button" data-price="39000" aria-label="Thêm Trứng gà ta vào giỏ"><svg class="i" aria-hidden="true"><use href="#i-plus"/></svg></button></div></div>
+        </article></li>
+        <li><article class="card">
+          <div class="ph"><img src="../../uploads/products/nho-xanh-ninh-thuan-640.webp" alt="Nho xanh Ninh Thuận" width="640" height="640" loading="lazy"><span class="tag-price marker num">89.000₫</span></div>
+          <div class="body"><h3><a href="#">Nho xanh Ninh Thuận</a></h3><p class="meta">Hộp 500g<br>Ninh Thuận</p>
+            <div class="foot"><p><span class="stock low">Chỉ còn 3 hộp</span><span class="perkg num">178.000₫/kg</span></p><button class="add" type="button" data-price="89000" aria-label="Thêm Nho xanh Ninh Thuận vào giỏ"><svg class="i" aria-hidden="true"><use href="#i-plus"/></svg></button></div></div>
+        </article></li>
+        <li><article class="card is-out">
+          <div class="ph"><img src="../../uploads/products/tao-envy-640.webp" alt="Táo Envy" width="640" height="640" loading="lazy"><span class="tag-price marker num">159.000₫</span></div>
+          <div class="body"><h3><a href="#">Táo Envy</a></h3><p class="meta">Túi ~1kg<br>Nhập khẩu New Zealand</p>
+            <div class="foot"><p><span class="stock out">Tạm hết, sắp về</span></p><button class="add" type="button" disabled aria-label="Táo Envy tạm hết"><svg class="i" aria-hidden="true"><use href="#i-plus"/></svg></button></div></div>
+        </article></li>
+      </ul>
+    </div>
+  </section>
+
+  <section class="block gift" aria-labelledby="gift-title">
+    <div class="wrap carton-shadow">
+      <div class="carton">
+        <div>
+          <h2 id="gift-title" class="marker">Tự xếp giỏ quà biếu</h2>
+          <p>Chọn trái cây, đặc sản, kéo thả vào giỏ mây đan tay rồi viết lời chúc. Biếu Tết, mừng thọ, thăm người thân, giao trong ngày.</p>
+          <p class="num"><b>Giỏ mây Phú Vinh 120.000₫</b>, cộng tiền các món bạn chọn.</p>
+          <a class="btn-hl" href="#">Xếp giỏ quà</a>
+        </div>
+        <div class="cutouts" aria-hidden="true">
+          <img src="../../uploads/products/cam-sanh-cutout.webp" alt="" loading="lazy">
+          <img src="../../uploads/products/xoai-cat-hoa-loc-cutout.webp" alt="" loading="lazy">
+          <img src="../../uploads/products/bo-034-cutout.webp" alt="" loading="lazy">
+          <img src="../../uploads/products/chuoi-gia-cutout.webp" alt="" loading="lazy">
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="carton">
+      <div>
+        <p class="foot-name marker">Chợ Sáng</p>
+        <p class="foot-tag">Đồ ăn hằng ngày, ghi rõ giá và nguồn gốc, giao trong ngày ở TP.HCM.</p>
+      </div>
+      <div class="foot-cols">
+        <div>
+          <h3>Cửa hàng</h3>
+          <ul>
+            <li>Số 1 đường Chợ Sáng, Quận 1, TP.HCM</li>
+            <li>Mở cửa 6:00–21:00 hằng ngày</li>
+            <li><a class="hl" href="tel:+84123456789">Hotline 0123 456 789</a></li>
+            <li><a class="hl" href="#">Nhắn Zalo</a></li>
+          </ul>
+        </div>
+        <div>
+          <h3>Khung giờ giao</h3>
+          <ul class="slots num"><li>08:00–10:00</li><li>10:00–12:00</li><li>14:00–16:00</li><li>17:00–19:00</li></ul>
+          <ul><li class="num">Ship 20.000₫, miễn phí từ 300.000₫</li></ul>
+        </div>
+        <nav aria-label="Chân trang">
+          <h3>Thông tin</h3>
+          <ul>
+            <li><a class="hl" href="#">Giới thiệu</a></li>
+            <li><a class="hl" href="#">Liên hệ</a></li>
+            <li><a class="hl" href="#">Đơn hàng của tôi</a></li>
+            <li><a class="hl" href="#">Giỏ quà biếu</a></li>
+          </ul>
+        </nav>
+      </div>
+    </div>
+    <div class="legal">
+      <p>Bản demo: không giao hàng và không thu tiền thật. Hotline, địa chỉ là thông tin minh hoạ.</p>
+      <p>Ảnh sản phẩm là ảnh minh hoạ.</p>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Mock: thêm vào giỏ chỉ để xem rổ freeship chạy. Bản thật dùng action /cart.
+  const FREESHIP = 300000;
+  const vnd = (n) => new Intl.NumberFormat("vi-VN").format(n) + "₫";
+  let count = 0, total = 0;
+  const badge = document.getElementById("badge");
+  const bar = document.getElementById("freeship");
+
+  document.addEventListener("click", (e) => {
+    const btn = e.target.closest("button.add, button.m-add");
+    if (!btn || btn.disabled) return;
+    count += 1;
+    total += Number(btn.dataset.price);
+    btn.classList.add("is-added");
+    const use = btn.querySelector("use"), label = btn.querySelector("span");
+    use.setAttribute("href", "#i-check");
+    if (label) label.textContent = "Đã thêm";
+    setTimeout(() => {
+      btn.classList.remove("is-added"); use.setAttribute("href", "#i-plus");
+      if (label) label.textContent = "Thêm vào giỏ";
+    }, 900);
+
+    badge.hidden = false;
+    badge.textContent = count > 99 ? "99+" : count;
+    badge.classList.remove("bump"); void badge.offsetWidth; badge.classList.add("bump");
+    document.getElementById("cart").setAttribute("aria-label", `Giỏ hàng, ${count} món`);
+
+    bar.hidden = false;
+    const left = FREESHIP - total;
+    document.getElementById("fs-text").innerHTML = left > 0
+      ? `Còn <strong>${vnd(left)}</strong> nữa được freeship`
+      : `<strong>Đơn của bạn được freeship</strong>`;
+    document.getElementById("fs-bar").style.width = Math.min(100, (total / FREESHIP) * 100) + "%";
+  });
+
+  // Kệ hàng: cuộn ngang native (vuốt được), hai nút trượt đúng một món
+  const track = document.getElementById("track");
+  const navs = document.querySelectorAll(".nav-btn");
+  const step = () => track.querySelector(".slide").offsetWidth + parseFloat(getComputedStyle(track).columnGap);
+  const syncShelf = () => {
+    const i = Math.round(track.scrollLeft / step());
+    document.getElementById("sl-i").textContent = i + 1;
+    navs[0].disabled = track.scrollLeft < 4;
+    navs[1].disabled = track.scrollLeft + track.clientWidth > track.scrollWidth - 4;
+  };
+  navs.forEach((b) => b.addEventListener("click", () => track.scrollBy({ left: step() * Number(b.dataset.dir) })));
+  track.addEventListener("scroll", syncShelf, { passive: true });
+  syncShelf();
+
+  // Nghiêng món theo con trỏ (chuột thật, không giảm chuyển động)
+  if (matchMedia("(hover: hover) and (prefers-reduced-motion: no-preference)").matches) {
+    document.querySelectorAll(".model").forEach((m) => {
+      const obj = m.querySelector(".m-obj img");
+      m.addEventListener("pointermove", (e) => {
+        const r = m.getBoundingClientRect();
+        const x = (e.clientX - r.left) / r.width - 0.5, y = (e.clientY - r.top) / r.height - 0.5;
+        m.classList.add("is-tilting");
+        obj.style.setProperty("--ry", `${x * 28}deg`);
+        obj.style.setProperty("--rx", `${-y * 18}deg`);
+      });
+      m.addEventListener("pointerleave", () => {
+        m.classList.remove("is-tilting");
+        obj.style.setProperty("--ry", "0deg");
+        obj.style.setProperty("--rx", "0deg");
+      });
+    });
+  }
+
+  const d = new Date();
+  const day = ["Chủ Nhật", "Thứ Hai", "Thứ Ba", "Thứ Tư", "Thứ Năm", "Thứ Sáu", "Thứ Bảy"][d.getDay()];
+  document.getElementById("today").textContent = `${day}, ${d.getDate()}/${d.getMonth() + 1}`;
+</script>
+</body>
+</html>

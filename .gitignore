@@ -1,0 +1,10 @@
+.DS_Store
+.env
+/node_modules/
+/.react-router/
+/build/
+/app/generated/
+/uploads/
+/.playwright-cli/
+/test-results/
+/playwright-report/

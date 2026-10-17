@@ -1,0 +1,13 @@
+# M6 plan — controller rulings (15/10/2026)
+- Ruling: execution order M4 → M6. M6 planner re-syncs its patches against post-M4 real code (cutoutSrc already added by M4 → skip that hunk) before the Consultant gate.
+- Ruling (Q1): DoD "LCP không đổi so với M1" interpreted as LCP ≤2.5s AND ≤0.3s slower than the text hero — accepted (chosen variant 2.26–2.42s, +0.15–0.23s).
+- Ruling (Q2): @types/three@0.186.0 dev dependency accepted (type package of a spec-listed library).
+- Ruling (Q4): ≥45fps on real Android = owner check at the M7 pitch rehearsal; CPU-throttled proxy recorded.
+- Q5 (sun on hero basket, Mua ngay over basket, categories without cutouts) → Designer at the M6 UI gate.
+- After M4 seeds cutouts: run `npm run hero:poster` (part of M6 tasks).
+- Re-sync done (post-M4, 15/10): prototype vitest 279, e2e 43; three chunk 133,565 B gz; `/` 129,056 B (+1,849; with M5 +835 → ~129.9 KB, under 133,120); rattan colours per M4 carry-over; Decision 12 per-texture GPU upload yields (long task 159–195ms).
+- Ruling (re-sync Q1): Task 6 judges LCP on the MEDIAN of 5 Lighthouse runs on `/` (single runs are noisy on this machine: FCP jumped too in the 2590 run); median ≥2.5s → DONE_WITH_CONCERNS. Cost if wrong: a slow-tail regression slips to M7 perf work.
+- Q5 (Mua ngay over basket on mobile; rau củ/thịt cá without cutouts; 2 per category) → Designer at M6 UI gate.
+- → Consultant plan gate dispatched.
+- Consultant plan gate: APPROVE WITH CHANGES (5 required: abort guard before mount; context-loss assert; poster alt=""; poster script cut-out guard; counts). Controller addition: poster DB source must not be dev DB (or read catalog directly). Sent to planner.
+- Gate changes applied (all 5 + optional 1,2,4,5,6; 3 rejected with measurements → Decision 16). Prototype vitest +15 (281), e2e +14 (44). Plan READY → executing.

@@ -1,0 +1,297 @@
+@import "tailwindcss";
+@import "@fontsource-variable/archivo";
+@import "@fontsource-variable/shantell-sans/infm.css"; /* trục INFM: nét bút lông */
+
+/* Thế giới "Bảng giá bìa": bìa carton kraft, mực bút lông, dạ quang cho hành động kế tiếp.
+   Token đặt theo VAI TRÒ (cta, price, sale), không theo màu: đổi bảng màu chỉ sửa ở đây. */
+@theme {
+  --color-bg: #eef0ee; /* nền chợ buổi sáng: xi măng sáng */
+  --color-surface: #ffffff;
+  --color-ink: #1f1e1c; /* mực bút lông */
+  --color-ink-muted: #565a57; /* chữ phụ trên nền trắng/xám */
+  --color-ink-soft: #4a3a28; /* chữ phụ trên bìa carton */
+  --color-line: #d5d8d5;
+  --color-on-ink: #e9e7e3; /* chữ trên nền mực (chân trang) */
+  --color-on-ink-muted: #b9b6b0;
+  --color-kraft: #c9a27a; /* bìa carton */
+  --color-kraft-pale: #e2c9a8;
+  --color-cta: #f2c200; /* bút dạ quang: chỉ hành động kế tiếp */
+  --color-cta-press: #d9ad00;
+  --color-price: #1f1e1c;
+  --color-sale: #9e1b14; /* bút đỏ: giá đã sửa */
+  --color-fresh: #2e7d32; /* chỉ một nghĩa: còn hàng */
+  --color-fresh-tint: #e8f3e6;
+  --color-danger: #b42318;
+  --color-note-yellow: #fde89c;
+  --color-note-pink: #f8d2cb;
+  --color-note-blue: #d3e5f0;
+
+  --font-sans: "Archivo Variable", ui-sans-serif, system-ui, sans-serif;
+  --font-display: "Shantell Sans Variable", "Archivo Variable", ui-sans-serif, sans-serif;
+  --font-display--font-variation-settings: "INFM" 60;
+
+  --ease-snappy: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-spring: cubic-bezier(0.34, 1.56, 0.64, 1); /* thẻ treo: lắc nhẹ rồi đứng */
+}
+
+@layer base {
+  html {
+    color-scheme: light;
+    font-synthesis-weight: none; /* font biến thiên đủ mọi độ đậm: không để trình duyệt giả đậm làm nhoè dấu chồng */
+    scrollbar-gutter: stable;
+  }
+  body {
+    @apply bg-bg font-sans text-ink antialiased;
+    line-height: 1.5;
+  }
+  h1,
+  h2,
+  h3 {
+    @apply font-display font-extrabold;
+    line-height: 1.15; /* ≥1.1 để dấu chồng (ẫ, ặ, ộ) không bị cắt */
+  }
+  :focus-visible {
+    outline: 3px solid var(--color-ink);
+    outline-offset: 3px;
+  }
+  ::selection {
+    background: var(--color-cta);
+    color: var(--color-ink);
+  }
+  /* Drawer mở thì trang nền không cuộn theo */
+  html:has(dialog[open]) {
+    overflow: hidden;
+  }
+}
+
+/* M2: chuyển động giỏ hàng (spec mục 4). Đổi thời lượng ở đây. */
+.pending-bar {
+  position: fixed;
+  inset: 0 0 auto;
+  z-index: 50;
+  height: 3px;
+  background: var(--color-ink); /* không dùng màu dạ quang: màu đó chỉ dành cho hành động kế tiếp */
+  transform: scaleX(0);
+  transform-origin: left;
+  opacity: 0;
+  pointer-events: none;
+  transition:
+    opacity 150ms var(--ease-snappy),
+    transform 0s linear 150ms;
+}
+.pending-bar.is-busy {
+  opacity: 1;
+  transform: scaleX(0.8);
+  transition:
+    opacity 150ms var(--ease-snappy) 150ms,
+    transform 2s var(--ease-snappy) 150ms;
+}
+
+.cart-bump {
+  animation: cart-bump 150ms var(--ease-snappy) var(--bump-delay, 0ms) both;
+}
+@keyframes cart-bump {
+  50% {
+    transform: scale(1.35);
+  }
+}
+
+.fly-to-cart {
+  position: fixed;
+  z-index: 60;
+  pointer-events: none;
+  border-radius: 1rem;
+  object-fit: cover;
+  animation: fly-to-cart 350ms var(--ease-snappy) forwards; /* ngoại lệ duy nhất cho quy tắc 150-200ms. fly-to-cart.ts dọn ảnh sau 450ms: giữ ≥ thời lượng + 100ms */
+}
+@keyframes fly-to-cart {
+  to {
+    transform: translate(var(--fly-x), var(--fly-y)) scale(0.1);
+    opacity: 0;
+  }
+}
+
+/* ---------- Ngữ pháp "bảng giá bìa": dùng lại ở mọi trang ---------- */
+
+/* Nút hành động chính: bút dạ quang. Rê chuột: một nét dạ quang đậm hơn quét qua, nút nghiêng như được kẹp lên */
+@utility btn-cta {
+  position: relative;
+  isolation: isolate;
+  overflow: hidden;
+  border: 2px solid var(--color-ink);
+  border-radius: 9999px;
+  background: var(--color-cta);
+  color: var(--color-ink);
+  box-shadow: 0 2px 4px rgb(31 30 28 / 0.12);
+  transition:
+    transform 380ms var(--ease-spring),
+    box-shadow 300ms var(--ease-out-expo);
+  &::before {
+    content: "";
+    position: absolute;
+    inset: -2px;
+    z-index: -1;
+    background: var(--color-cta-press);
+    transform: scaleX(0);
+    transform-origin: left;
+    transition: transform 380ms var(--ease-out-expo);
+  }
+  &:hover:not(:disabled) {
+    transform: translateY(-3px) rotate(-1.5deg);
+    box-shadow: 0 10px 18px -6px rgb(31 30 28 / 0.35);
+  }
+  &:hover:not(:disabled)::before {
+    transform: scaleX(1);
+  }
+  &:active:not(:disabled) {
+    transform: scale(0.97);
+    transition-duration: 90ms;
+  }
+  &:disabled {
+    cursor: not-allowed;
+    border-color: var(--color-line);
+    background: var(--color-line);
+    color: var(--color-ink-muted);
+    box-shadow: none;
+  }
+}
+
+/* Nút tròn mực đen (+, mũi tên). Rê chuột: chuyển dạ quang, phóng nhẹ, icon xoay */
+@utility btn-ink {
+  border-radius: 9999px;
+  background: var(--color-ink);
+  color: var(--color-surface);
+  transition:
+    transform 380ms var(--ease-spring),
+    background-color 200ms var(--ease-out-expo),
+    color 200ms var(--ease-out-expo),
+    box-shadow 200ms var(--ease-out-expo);
+  & svg {
+    transition: transform 420ms var(--ease-spring);
+  }
+  &:hover:not(:disabled) {
+    background: var(--color-cta);
+    color: var(--color-ink);
+    box-shadow: inset 0 0 0 2px var(--color-ink);
+    transform: scale(1.08);
+  }
+  &:hover:not(:disabled) svg {
+    transform: rotate(90deg);
+  }
+  &:active:not(:disabled) {
+    transform: scale(0.92);
+    transition-duration: 90ms;
+  }
+  &:disabled {
+    cursor: not-allowed;
+    background: var(--color-line);
+    color: var(--color-ink-muted);
+  }
+}
+
+/* Link chữ: nét dạ quang tô nửa dưới dòng chữ, quét từ trái sang. Vùng bấm 44px lo bằng padding, nét chỉ nằm trong dòng chữ */
+@utility hl-link {
+  background-image: linear-gradient(var(--color-cta), var(--color-cta));
+  background-repeat: no-repeat;
+  background-origin: content-box;
+  background-clip: content-box;
+  background-position: 0 90%;
+  background-size: 0% 38%;
+  transition: background-size 360ms var(--ease-out-expo);
+  &:hover,
+  &:focus-visible {
+    background-size: 100% 38%;
+  }
+}
+
+/* Nút icon tròn (tài khoản, giỏ, đóng): vòng dạ quang nở từ tâm, icon lắc nhẹ */
+@utility btn-icon {
+  position: relative;
+  isolation: isolate;
+  border-radius: 9999px;
+  &::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    border-radius: inherit;
+    background: var(--color-cta);
+    transform: scale(0);
+    transition: transform 320ms var(--ease-spring);
+  }
+  &:hover::before {
+    transform: scale(1);
+  }
+  &:hover > svg {
+    animation: jiggle 420ms var(--ease-out-expo);
+  }
+}
+@keyframes jiggle {
+  25% {
+    transform: rotate(-12deg);
+  }
+  60% {
+    transform: rotate(8deg);
+  }
+}
+
+/* Tấm bìa carton lớn, mép xé */
+@utility carton {
+  background: var(--color-kraft);
+  clip-path: polygon(0% 0.5%, 3.8% 0.2%, 7.7% 1%, 11.5% 0.1%, 15.4% 0.9%, 19.2% 0.6%, 23.1% 0.1%, 26.9% 0.8%, 30.8% 0.1%, 34.6% 0.7%, 38.5% 0.1%, 42.3% 0.1%, 46.2% 0.7%, 50% 1.3%, 53.8% 0.2%, 57.7% 0.4%, 61.5% 1%, 65.4% 1.5%, 69.2% 0.9%, 73.1% 0.6%, 76.9% 1.6%, 80.8% 0.1%, 84.6% 1.4%, 88.5% 0.5%, 92.3% 0.2%, 96.2% 0.2%, 100% 0.5%, 100% 98.7%, 96.2% 99.7%, 92.3% 99.1%, 88.5% 99%, 84.6% 99.4%, 80.8% 99.1%, 76.9% 99.9%, 73.1% 99.9%, 69.2% 99.7%, 65.4% 98.9%, 61.5% 99.3%, 57.7% 99.5%, 53.8% 99.1%, 50% 99.3%, 46.2% 99.5%, 42.3% 98.7%, 38.5% 98.9%, 34.6% 99.6%, 30.8% 99.1%, 26.9% 99.2%, 23.1% 98.6%, 19.2% 98.8%, 15.4% 99.5%, 11.5% 98.4%, 7.7% 99.8%, 3.8% 99.3%, 0% 98.8%);
+}
+/* clip-path cắt mất box-shadow: bóng đặt ở phần tử bọc ngoài */
+@utility carton-shadow {
+  filter: drop-shadow(0 10px 14px rgb(60 40 15 / 0.22)) drop-shadow(0 2px 3px rgb(60 40 15 / 0.18));
+}
+
+/* Thẻ giá bìa nhỏ ghim trên ảnh: lắc quanh đinh ghim khi rê chuột vào cha có class `group` */
+@utility carton-tag {
+  background: var(--color-kraft);
+  clip-path: polygon(0 6%, 40% 0, 100% 4%, 99% 96%, 55% 100%, 1% 94%);
+  transform-origin: 15% 0;
+  transition:
+    rotate 550ms var(--ease-spring),
+    translate 400ms var(--ease-spring),
+    background-color 200ms var(--ease-out-expo);
+}
+
+/* Giấy note dán */
+@utility sticky-note {
+  border-bottom-right-radius: 28px 6px; /* góc dưới hơi cong lên */
+  box-shadow:
+    inset 0 26px 0 rgb(31 30 28 / 0.035),
+    0 1px 1px rgb(60 40 15 / 0.1),
+    0 14px 16px -12px rgb(60 40 15 / 0.45);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Khoảnh khắc duy nhất khi tải trang chủ: tấm bảng giá được treo lên rồi đứng yên (giảm chuyển động: đã tắt ở trên) */
+.sign-hang {
+  rotate: -1deg;
+  transform-origin: 50% 0;
+  animation: sign-hang 900ms var(--ease-out-expo) both;
+}
+@keyframes sign-hang {
+  0% {
+    rotate: -4deg;
+    translate: 0 -14px;
+  }
+  55% {
+    rotate: 0.4deg;
+  }
+  100% {
+    rotate: -1deg;
+  }
+}

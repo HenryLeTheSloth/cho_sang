@@ -1,0 +1,56 @@
+{
+  "skill_name": "scroll-synced-scene",
+  "evals": [
+    {
+      "id": 1,
+      "prompt": "I'm building a landing page for an oolong tea brand. Four full-screen sections: Pick, Wither, Roll, Steep. Behind them sits a fixed Three.js canvas: one tea leaf travels from section to section (it sits beside the text, alternating left/right), wilts in Wither, curls into a ball in Roll, and in Steep a handful of curled leaves drop into a glass teapot that fills with water as they land. Plain TypeScript + three, no framework. Write the scroll/animation controller and the scene update code (stub the meshes with simple geometry), and tell me how it behaves. I don't want visitors to have to scroll a ton per section.",
+      "files": [],
+      "expected_output": "A controller where positions follow scroll and per-section effects play on a real-time playhead with catch-up and rewind; teapot water derived from landed leaves; reduced motion; testable state.",
+      "expectations": [
+        "The leaf's position between sections is computed from a continuous scroll position (how far the page has scrolled through the sections), not from the time-based playhead",
+        "Per-section effects (wilt, curl, pour) play on a time-based playhead whose target is set by the section currently on screen, so a section does not need extra scroll distance to play",
+        "The playhead moves faster when it is more than one section behind its target (catch-up), rather than playing skipped sections at normal speed",
+        "Scrolling back up is handled: effects are pure functions of the playhead (so they reverse) and the rewind is at least as fast as playing forward",
+        "The teapot water level is derived from the leaves' landing progress (e.g. share of leaves landed), not from an independent timer or threshold",
+        "The playhead advances by real elapsed time with a generous cap (≥ ~0.1 s), not a tiny per-frame cap that makes slow devices run in slow motion",
+        "prefers-reduced-motion is respected (effects jump to their end state or motion is reduced)",
+        "Provides a way to verify the timing logic: unit tests for the pure step/position functions and/or exposed playhead state for end-to-end tests"
+      ]
+    },
+    {
+      "id": 2,
+      "prompt": "Trang mật ong của mình (scene.ts, main.ts, index.html trong thư mục input) có 3 vấn đề: khi cuộn ngược lên thì giọt mật đứng sai chỗ khoảng một giây rồi mới bay về; hũ đầy chậm hơn so với tốc độ các giọt rơi vào; và trên laptop cũ của mình cả animation chạy như slow-motion. Sửa giúp mình, giữ cấu trúc hiện tại nếu được.",
+      "files": [
+        "inputs/honey/scene.ts",
+        "inputs/honey/main.ts",
+        "inputs/honey/index.html"
+      ],
+      "expected_output": "Drop position moved to a scroll-driven track, honey level derived from drips, dt cap fixed, reverse still correct, explanation of root causes.",
+      "expectations": [
+        "Explains that the drop's position is driven by the time playhead (glide happens inside the section's playhead range), which is why it lags when scrolling back up",
+        "The fix drives the drop's position from scroll position (continuous fraction through the sections), so it moves in step with the page in both directions",
+        "The honey level is derived from the drips' progress (e.g. average landing progress), not from its own separate smoothstep range",
+        "Identifies the 0.033 s per-frame dt cap in main.ts as the cause of slow motion on slow machines and replaces it with real elapsed time (with a larger cap)",
+        "Drips and honey level still reverse together when scrolling back up (both remain functions of the playhead)",
+        "Keeps the existing structure (scene.ts update function, main.ts loop) and the code remains valid TypeScript"
+      ]
+    },
+    {
+      "id": 3,
+      "prompt": "story.js + index.html in the input folder use GSAP ScrollTrigger: each chapter is 300vh, pinned, and scrubs the planet morph. People complain they have to scroll forever. I want each chapter to be one screen tall, but when someone lands on a chapter the planet morph should still play out fully, it shouldn't glitch when they scroll back up, and the nav links (which jump several chapters at once) should look fine too. Keep three.js; drop GSAP if it's not needed.",
+      "files": [
+        "inputs/planet/index.html",
+        "inputs/planet/story.js"
+      ],
+      "expected_output": "One-screen chapters; morph on a real-time playhead with catch-up/rewind; planet position scroll-linked; nav jumps fast-forward; reduced motion.",
+      "expectations": [
+        "Chapters become about one viewport tall and the 300vh pinned scrubbing is removed",
+        "The morph plays in real time when a chapter becomes the active one, instead of being scrubbed by scroll distance",
+        "The planet's position between chapters follows the scroll continuously (scroll-linked), separately from the morph timing",
+        "Jumping several chapters via nav links fast-forwards through the skipped morphs (speed grows with the backlog) instead of playing each at normal speed or queueing",
+        "Scrolling back up rewinds the morph to the end state of the chapter now on screen, at least as fast as forward",
+        "prefers-reduced-motion is respected"
+      ]
+    }
+  ]
+}
